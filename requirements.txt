@@ -1,0 +1,18 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+
+# Database
+SQLAlchemy>=2.0.25
+pg8000>=1.30.3
+
+# Pydantic + email validation
+pydantic>=2.6.0
+email-validator>=2.1.0
+
+# Env + testing
+python-dotenv>=1.0.1
+pytest>=8.0.0
+
+python-jose[cryptography]
+passlib[bcrypt]
+

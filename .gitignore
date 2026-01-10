@@ -1,0 +1,61 @@
+# =========================
+# Python / FastAPI
+# =========================
+
+# Virtual environments (like target/ in Maven)
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache (like *.class files)
+__pycache__/
+*.py[cod]
+
+# Pytest cache
+.pytest_cache/
+
+# =========================
+# Environment & Secrets
+# =========================
+
+# Environment variables
+.env
+.env.*
+
+# =========================
+# IDEs
+# =========================
+
+# VS Code
+.vscode/
+
+# PyCharm / IntelliJ
+.idea/
+
+# =========================
+# OS
+# =========================
+
+# macOS
+.DS_Store
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Build / Distribution
+# =========================
+
+# Python build artifacts (like /target in Java)
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Coverage
+# =========================
+.coverage
+htmlcov/

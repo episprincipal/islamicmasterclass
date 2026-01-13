@@ -1,0 +1,238 @@
+
+-- Optional: create a dedicated schema instead of using "public"
+-- CREATE SCHEMA khan;
+-- SET search_path TO khan;
+
+-------------------------------------------------------
+-- 1. Core auth & people
+-------------------------------------------------------
+
+CREATE TABLE users (
+    id              BIGSERIAL PRIMARY KEY,
+    email           VARCHAR(255) UNIQUE NOT NULL,
+    password_hash   TEXT NOT NULL,
+    full_name       VARCHAR(255) NOT NULL,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE roles (
+    id          SERIAL PRIMARY KEY,
+    name        VARCHAR(50) UNIQUE NOT NULL,   -- e.g. 'student','parent','instructor','admin'
+    description TEXT
+);
+
+CREATE TABLE user_roles (
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id INT    NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE user_profiles (
+    user_id            BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    avatar_url         TEXT,
+    bio                TEXT,
+    country            VARCHAR(100),
+    date_of_birth      DATE,
+    preferred_language VARCHAR(20)
+);
+
+-- Parent / child mapping (for parental control)
+CREATE TABLE parent_child (
+    parent_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    child_id  BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (parent_id, child_id)
+);
+
+-------------------------------------------------------
+-- 2. Subjects, courses, units, lessons, content
+-------------------------------------------------------
+
+CREATE TABLE subjects (
+    id          BIGSERIAL PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    slug        VARCHAR(150) NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE courses (
+    id           BIGSERIAL PRIMARY KEY,
+    subject_id   BIGINT REFERENCES subjects(id),
+    title        VARCHAR(255) NOT NULL,
+    slug         VARCHAR(255) NOT NULL UNIQUE,
+    description  TEXT,
+    level        VARCHAR(50),           -- e.g. Beginner, Grade 5, etc.
+    age_min      INT,
+    age_max      INT,
+    is_published BOOLEAN NOT NULL DEFAULT FALSE,
+    created_by   BIGINT REFERENCES users(id),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE course_units (
+    id          BIGSERIAL PRIMARY KEY,
+    course_id   BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    title       VARCHAR(255) NOT NULL,
+    position    INT NOT NULL,           -- ordering in left sidebar
+    description TEXT,
+    UNIQUE (course_id, position)
+);
+
+CREATE TABLE lessons (
+    id               BIGSERIAL PRIMARY KEY,
+    unit_id          BIGINT NOT NULL REFERENCES course_units(id) ON DELETE CASCADE,
+    title            VARCHAR(255) NOT NULL,
+    position         INT NOT NULL,           -- ordering inside unit
+    lesson_type      VARCHAR(50) NOT NULL,   -- 'video','article','pdf','exercise', etc.
+    estimated_minutes INT,
+    UNIQUE (unit_id, position)
+);
+
+CREATE TABLE lesson_contents (
+    id           BIGSERIAL PRIMARY KEY,
+    lesson_id    BIGINT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    content_type VARCHAR(50) NOT NULL,   -- 'video','text','pdf','external_url', etc.
+    video_url    TEXT,
+    text_html    TEXT,
+    pdf_url      TEXT,
+    embed_url    TEXT
+);
+
+-------------------------------------------------------
+-- 3. Enrollments & lesson progress
+-------------------------------------------------------
+
+CREATE TABLE enrollments (
+    id           BIGSERIAL PRIMARY KEY,
+    user_id      BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id    BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    enrolled_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    enrolled_by  BIGINT REFERENCES users(id),   -- parent, teacher, or self
+    status       VARCHAR(20) NOT NULL DEFAULT 'active',  -- 'active','completed','dropped'
+    UNIQUE (user_id, course_id)
+);
+
+CREATE TABLE lesson_progress (
+    id               BIGSERIAL PRIMARY KEY,
+    user_id          BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lesson_id        BIGINT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    status           VARCHAR(20) NOT NULL DEFAULT 'not_started',  -- 'not_started','in_progress','completed'
+    started_at       TIMESTAMPTZ,
+    completed_at     TIMESTAMPTZ,
+    last_viewed_at   TIMESTAMPTZ,
+    progress_percent NUMERIC(5,2) NOT NULL DEFAULT 0,  -- 0.00–100.00
+    UNIQUE (user_id, lesson_id)
+);
+
+-------------------------------------------------------
+-- 4. Quizzes, questions, options, attempts
+-------------------------------------------------------
+
+CREATE TABLE quizzes (
+    id                 BIGSERIAL PRIMARY KEY,
+    course_id          BIGINT REFERENCES courses(id),
+    unit_id            BIGINT REFERENCES course_units(id),
+    lesson_id          BIGINT REFERENCES lessons(id),
+    title              VARCHAR(255) NOT NULL,
+    description        TEXT,
+    max_attempts       INT,
+    time_limit_seconds INT
+    -- You can enforce one of (course_id, unit_id, lesson_id) via a CHECK if you want.
+);
+
+CREATE TABLE questions (
+    id            BIGSERIAL PRIMARY KEY,
+    quiz_id       BIGINT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+    question_type VARCHAR(50) NOT NULL,   -- 'mcq','true_false','short_answer', etc.
+    prompt_text   TEXT NOT NULL,
+    position      INT NOT NULL,
+    UNIQUE (quiz_id, position)
+);
+
+CREATE TABLE question_options (
+    id           BIGSERIAL PRIMARY KEY,
+    question_id  BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+    option_text  TEXT NOT NULL,
+    is_correct   BOOLEAN NOT NULL DEFAULT FALSE,
+    position     INT NOT NULL,
+    UNIQUE (question_id, position)
+);
+
+CREATE TABLE quiz_attempts (
+    id            BIGSERIAL PRIMARY KEY,
+    quiz_id       BIGINT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+    user_id       BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    started_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    submitted_at  TIMESTAMPTZ,
+    score         NUMERIC(6,2),   -- e.g. 85.50
+    max_score     NUMERIC(6,2),
+    passed        BOOLEAN,
+    attempt_number INT NOT NULL,
+    UNIQUE (quiz_id, user_id, attempt_number)
+);
+
+CREATE TABLE quiz_attempt_answers (
+    id                 BIGSERIAL PRIMARY KEY,
+    attempt_id         BIGINT NOT NULL REFERENCES quiz_attempts(id) ON DELETE CASCADE,
+    question_id        BIGINT NOT NULL REFERENCES questions(id),
+    selected_option_id BIGINT REFERENCES question_options(id),
+    free_text_answer   TEXT,
+    is_correct         BOOLEAN,
+    UNIQUE (attempt_id, question_id)
+);
+
+-------------------------------------------------------
+-- 5. Discussions & notifications (optional but useful)
+-------------------------------------------------------
+
+CREATE TABLE discussion_threads (
+    id         BIGSERIAL PRIMARY KEY,
+    course_id  BIGINT REFERENCES courses(id) ON DELETE SET NULL,
+    lesson_id  BIGINT REFERENCES lessons(id) ON DELETE SET NULL,
+    title      VARCHAR(255) NOT NULL,
+    created_by BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE discussion_posts (
+    id             BIGSERIAL PRIMARY KEY,
+    thread_id      BIGINT NOT NULL REFERENCES discussion_threads(id) ON DELETE CASCADE,
+    user_id        BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content        TEXT NOT NULL,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    parent_post_id BIGINT REFERENCES discussion_posts(id) ON DELETE CASCADE
+);
+
+CREATE TABLE notifications (
+    id         BIGSERIAL PRIMARY KEY,
+    user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type       VARCHAR(50) NOT NULL,  -- 'course_assigned','quiz_completed', etc.
+    data       JSONB,                 -- flexible payload
+    is_read    BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-------------------------------------------------------
+-- 6. Plans & subscriptions (if you want monetization)
+-------------------------------------------------------
+
+CREATE TABLE plans (
+    id             BIGSERIAL PRIMARY KEY,
+    name           VARCHAR(100) NOT NULL,
+    price_cents    INT NOT NULL,
+    billing_period VARCHAR(20) NOT NULL,   -- 'monthly','yearly', etc.
+    description    TEXT,
+    is_active      BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE subscriptions (
+    id         BIGSERIAL PRIMARY KEY,
+    user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan_id    BIGINT NOT NULL REFERENCES plans(id),
+    start_date DATE NOT NULL,
+    end_date   DATE,
+    status     VARCHAR(20) NOT NULL,      -- 'active','canceled','expired'
+    UNIQUE (user_id, plan_id, start_date)
+);

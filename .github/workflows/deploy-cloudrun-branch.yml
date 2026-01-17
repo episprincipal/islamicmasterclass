@@ -1,0 +1,38 @@
+name: Deploy Cloud Run (any branch)
+
+on:
+  push:
+    branches: [ "**" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Create a Cloud Run service name from the branch
+        id: svc
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          SAFE=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed 's#[^a-z0-9-]#-#g' | sed 's#--*#-#g' | sed 's#^-##;s#-$##' | cut -c1-40)
+          echo "service=imc-api-${SAFE}" >> $GITHUB_OUTPUT
+
+      - name: Deploy
+        run: |
+          gcloud run deploy "${{ steps.svc.outputs.service }}" \
+            --source . \
+            --region "${{ secrets.GCP_REGION }}" \
+            --allow-unauthenticated

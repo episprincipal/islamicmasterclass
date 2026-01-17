@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -15,6 +15,7 @@ export default function App ()
 {
   return (
     <Routes>
+      {/* Public */ }
       <Route path="/" element={ <Home /> } />
       <Route path="/login" element={ <Login /> } />
       <Route path="/signup" element={ <Signup /> } />
@@ -22,7 +23,7 @@ export default function App ()
       <Route path="/unauthorized" element={ <Unauthorized /> } />
       <Route path="/logout" element={ <Logout /> } />
 
-      {/* Protected routes */ }
+      {/* Protected */ }
       <Route element={ <RequireAuth /> }>
         <Route element={ <RequireRole allowed={ [ "parent" ] } /> }>
           <Route path="/parent-dashboard" element={ <ParentDashboard /> } />
@@ -33,8 +34,8 @@ export default function App ()
         </Route>
       </Route>
 
-      {/* Default route */ }
-      <Route path="*" element={ <Login /> } />
+      {/* Fallback */ }
+      <Route path="*" element={ <Navigate to="/" replace /> } />
     </Routes>
   );
 }

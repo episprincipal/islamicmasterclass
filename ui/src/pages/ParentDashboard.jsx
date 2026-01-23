@@ -158,49 +158,49 @@ function GlassTopBar({ parentName }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-300/70 bg-white/70 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-sm" />
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-3 text-left">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600">
+            <span className="text-sm font-semibold text-white">IMC</span>
+          </div>
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight text-gray-900">
-              IslamicMasterclass
-            </div>
-            <div className="text-xs text-gray-500">Parent Dashboard</div>
+            <div className="text-sm font-semibold">IslamicMasterclass</div>
+            <div className="text-xs text-slate-500">Parent Portal</div>
           </div>
         </Link>
 
         <div className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
+            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
             <span className="hidden sm:inline">{parentName}</span>
             <span className="sm:hidden">Menu</span>
-            <span className="text-gray-400">▾</span>
+            <span className="text-slate-400">▾</span>
           </button>
 
           {open && (
             <div
-              className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-300 bg-white p-2 shadow-lg"
+              className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg"
               onMouseLeave={() => setOpen(false)}
             >
               <Link
                 to="/payment"
-                className="block rounded-xl px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
               >
                 Payment
               </Link>
               <Link
                 to="/add-child"
-                className="block rounded-xl px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
               >
                 Add Child
               </Link>
-              <div className="my-1 h-px bg-gray-100" />
+              <div className="my-1 h-px bg-slate-100" />
               <Link
                 to="/logout"
-                className="block rounded-xl px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
               >
                 Logout
               </Link>

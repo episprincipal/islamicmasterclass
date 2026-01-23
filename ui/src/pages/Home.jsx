@@ -76,8 +76,6 @@ export default function Home() {
   const [level, setLevel] = useState("All");
   const [category, setCategory] = useState("All");
 
-  const featured = useMemo(() => COURSES.find((c) => c.featured) || COURSES[0], []);
-
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     return COURSES.filter((c) => {
@@ -156,8 +154,8 @@ export default function Home() {
       {/* Hero (white + gold accent) */}
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-          <div className="grid items-center gap-8 md:grid-cols-2">
-            <div>
+          <div className="flex justify-center">
+            <div className="max-w-2xl text-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-100">
                 Spiritual tone • Clear structure
               </div>
@@ -166,11 +164,11 @@ export default function Home() {
                 Learn Islam with clarity, beauty, and structure.
               </h1>
 
-              <p className="mt-3 max-w-xl text-base text-slate-600">
+              <p className="mt-3 text-base text-slate-600">
                 Short lessons, clear learning paths, and progress tracking—built for students and families.
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <button
                   onClick={() => navigate("/signup")}
                   className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
@@ -186,52 +184,12 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-2 text-xs text-slate-700">
+              <div className="mt-6 flex flex-wrap justify-center gap-2 text-xs text-slate-700">
                 {["Beginner friendly", "Kids + Adults", "Progress tracking"].map((t) => (
                   <span key={t} className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">
                     {t}
                   </span>
                 ))}
-              </div>
-            </div>
-
-            {/* Featured card (emerald + gold) */}
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-xs font-semibold text-emerald-700">Featured</div>
-                  <div className="mt-2 text-lg font-semibold">This week’s popular course</div>
-                </div>
-                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-100">
-                  {featured.level}
-                </span>
-              </div>
-
-              <div className="mt-4">
-                <div className="text-xl font-bold">{featured.title}</div>
-                <p className="mt-2 text-sm text-slate-600">{featured.description}</p>
-
-                <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-                  <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
-                    <div className="text-slate-500">Category</div>
-                    <div className="mt-1 font-semibold">{featured.category}</div>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
-                    <div className="text-slate-500">Lessons</div>
-                    <div className="mt-1 font-semibold">{featured.lessons}</div>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
-                    <div className="text-slate-500">Min Age</div>
-                    <div className="mt-1 font-semibold">{featured.minAge}+</div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => alert(`View details → ${featured.title}`)}
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:underline"
-                >
-                  View details <span aria-hidden="true">→</span>
-                </button>
               </div>
             </div>
           </div>

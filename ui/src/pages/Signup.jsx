@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../lib/api";
+import { getRoleFromToken } from "../lib/auth";
 
 /**
  * Scope says registration should register Parent or Student.:contentReference[oaicite:4]{index=4}
@@ -10,7 +11,7 @@ import api from "../lib/api";
 export default function Signup() {
   const navigate = useNavigate();
 
-  const googleAuthUrl = `${import.meta.env.VITE_API_BASE_URL || ""}/auth/google`;
+  const googleAuthUrl = `${import.meta.env.VITE_API_BASE_URL || ""}/api/v1/auth/google`;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,9 +33,32 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await api.post("/auth/register", { name, email, password, role });
-      setMsg("✅ Account created! Redirecting to login...");
-      setTimeout(() => navigate("/login"), 900);
+      const [first_name, ...lastParts] = name.trim().split(' ');
+      const last_name = lastParts.join(' ') || 'User';
+      const res = await api.post("/api/v1/auth/register", {
+        first_name,
+        last_name,
+        email,
+        password,
+        role_name: role,
+        phone: null,
+        dob: null,
+        gender: null,
+        address: null,
+      });
+      const token = res.data?.access_token;
+      if (token) localStorage.setItem("imc_token", token);
+      setMsg("✅ Account created! Redirecting to dashboard...");
+      
+      // Redirect based on role
+      const userRole = getRoleFromToken();
+      if (userRole === "parent") {
+        setTimeout(() => navigate("/parent-dashboard"), 600);
+      } else if (userRole === "student") {
+        setTimeout(() => navigate("/student-dashboard"), 600);
+      } else {
+        setTimeout(() => navigate("/"), 600);
+      }
     } catch (err) {
       const detail =
         err?.response?.data?.detail ||
@@ -177,18 +201,6 @@ export default function Signup() {
                 {loading ? "Creating account..." : "Create account"}
               </button>
 
-              <div className="relative py-2 text-center text-xs text-slate-500">
-                <span className="bg-white px-2">or</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={onGoogle}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                <span>Continue with Google</span>
-              </button>
-
               <div className="text-center text-sm text-slate-600">
                 Already have an account?{" "}
                 <Link to="/login" className="font-semibold text-emerald-700 hover:underline">
@@ -203,9 +215,6 @@ export default function Signup() {
               </div>
             </form>
 
-            <div className="mt-6 text-xs text-slate-500">
-              If signup returns <b>404</b>, we’ll confirm the correct endpoint from local Swagger.
-            </div>
           </div>
         </div>
       </main>

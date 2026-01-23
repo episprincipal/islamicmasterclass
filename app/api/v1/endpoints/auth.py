@@ -1,4 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import RedirectResponse
+from authlib.integrations.starlette_client import OAuth
+from starlette.requests import Request
+import os
 from app.schemas.auth import RegisterRequest, RegisterResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -11,6 +15,16 @@ from app.auth import verify_password, create_access_token, get_password_hash
 from app.db.session import get_db
 
 router = APIRouter()
+
+# Initialize OAuth
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'},
+)
 
 @router.post("/login", response_model=LoginResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
@@ -149,3 +163,92 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": {"user_id": user_id, "email": email, "role": role_name},
     }
+
+
+@router.get("/google")
+async def google_login(request: Request):
+    """Initiate Google OAuth flow"""
+    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/v1/auth/google/callback')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    """Handle Google OAuth callback"""
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
+        
+        if not user_info:
+            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+        
+        email = user_info.get('email')
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+        
+        # Check if user exists
+        existing_user = db.execute(
+            text("SELECT user_id, full_name FROM imc.users WHERE lower(email) = lower(:email) LIMIT 1"),
+            {"email": email}
+        ).mappings().first()
+        
+        if existing_user:
+            user_id = existing_user['user_id']
+            
+            # Get user role
+            role = db.execute(
+                text("""
+                    SELECT r.role_name
+                    FROM imc.user_roles ur
+                    JOIN imc.roles r ON r.role_id = ur.role_id
+                    WHERE ur.user_id = :uid
+                    LIMIT 1
+                """),
+                {"uid": user_id}
+            ).scalar() or "student"
+        else:
+            # Create new user
+            full_name = user_info.get('name', email.split('@')[0])
+            
+            user_row = db.execute(
+                text("""
+                    INSERT INTO imc.users (full_name, email, password_hash)
+                    VALUES (:full_name, :email, :password_hash)
+                    RETURNING user_id
+                """),
+                {
+                    "full_name": full_name,
+                    "email": email,
+                    "password_hash": "",  # No password for OAuth users
+                }
+            ).mappings().first()
+            
+            user_id = user_row['user_id']
+            
+            # Assign default role (student)
+            role_row = db.execute(
+                text("SELECT role_id FROM imc.roles WHERE role_name = 'student' LIMIT 1")
+            ).scalar()
+            
+            if role_row:
+                db.execute(
+                    text("INSERT INTO imc.user_roles (user_id, role_id) VALUES (:uid, :rid)"),
+                    {"uid": user_id, "rid": role_row}
+                )
+            
+            role = "student"
+            db.commit()
+        
+        # Create JWT token
+        access_token = create_access_token(
+            subject=str(user_id),
+            extra={"role": role, "email": email}
+        )
+        
+        # Redirect to frontend with token
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        redirect_url = f"{frontend_url}/auth/callback?token={access_token}&role={role}"
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"OAuth error: {str(e)}")

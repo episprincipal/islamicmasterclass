@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../lib/api";
+import { getRoleFromToken } from "../lib/auth";
 
 /**
  * Scope mentions Login layout: left panel image + right panel form.:contentReference[oaicite:2]{index=2}
@@ -10,7 +11,7 @@ import api from "../lib/api";
 export default function Login() {
   const navigate = useNavigate();
 
-  const googleAuthUrl = `${import.meta.env.VITE_API_BASE_URL || ""}/auth/google`;
+  const googleAuthUrl = `${import.meta.env.VITE_API_BASE_URL || ""}/api/v1/auth/google`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,9 +24,20 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/api/v1/auth/login", { email, password });
+      const token = res.data?.access_token;
+      if (token) localStorage.setItem("imc_token", token);
       setMsg("✅ Login successful!");
-      navigate("/");
+      
+      // Redirect based on role
+      const role = getRoleFromToken();
+      if (role === "parent") {
+        setTimeout(() => navigate("/parent-dashboard"), 600);
+      } else if (role === "student") {
+        setTimeout(() => navigate("/student-dashboard"), 600);
+      } else {
+        setTimeout(() => navigate("/"), 600);
+      }
     } catch (err) {
       const detail =
         err?.response?.data?.detail ||
@@ -133,18 +145,6 @@ export default function Login() {
                 className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
               >
                 {loading ? "Signing in..." : "Sign in"}
-              </button>
-
-              <div className="relative py-2 text-center text-xs text-slate-500">
-                <span className="bg-white px-2">or</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={onGoogle}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                <span>Continue with Google</span>
               </button>
 
               <div className="flex items-center justify-between text-sm">

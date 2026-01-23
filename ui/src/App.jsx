@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import AuthCallback from "./pages/AuthCallback";
 import ParentDashboard from "./pages/ParentDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import Unauthorized from "./pages/Unauthorized";
@@ -19,6 +20,7 @@ export default function App ()
       <Route path="/" element={ <Home /> } />
       <Route path="/login" element={ <Login /> } />
       <Route path="/signup" element={ <Signup /> } />
+      <Route path="/auth/callback" element={ <AuthCallback /> } />
 
       <Route path="/unauthorized" element={ <Unauthorized /> } />
       <Route path="/logout" element={ <Logout /> } />

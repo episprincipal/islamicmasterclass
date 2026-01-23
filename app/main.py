@@ -1,9 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from dotenv import load_dotenv
+import os
+
+# Load .env.local before importing config
+load_dotenv(".env.local")
 
 from app.api.v1.router import api_router
 
 app = FastAPI(title="IMC FastAPI Starter", version="0.1.0")
+
+# Add session middleware for OAuth
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("JWT_SECRET", "change-me-in-secret-manager")
+)
 
 ALLOWED_ORIGINS = [
     "https://imc-ui-dev-479617-bucket.storage.googleapis.com",

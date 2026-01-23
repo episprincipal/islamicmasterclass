@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../lib/api";
 
 /**
  * Scope styling:
@@ -7,64 +8,6 @@ import { useNavigate } from "react-router-dom";
  * - Islamic colors: emerald, gold, white
  * Ref: scope landing page design language.:contentReference[oaicite:1]{index=1}
  */
-
-const COURSES = [
-  {
-    id: "quran-basics",
-    title: "Qur’an Basics",
-    category: "Qur’an",
-    level: "Beginner",
-    minAge: 6,
-    lessons: 24,
-    description: "Learn recitation basics, short surahs, and a simple daily practice plan.",
-    featured: true,
-  },
-  {
-    id: "arabic-101",
-    title: "Arabic 101",
-    category: "Arabic",
-    level: "Beginner",
-    minAge: 8,
-    lessons: 18,
-    description: "Start reading and understanding Arabic with simple patterns and practice.",
-  },
-  {
-    id: "seerah-stories",
-    title: "Seerah Stories",
-    category: "Seerah",
-    level: "All Levels",
-    minAge: 7,
-    lessons: 12,
-    description: "Stories and lessons from the life of the Prophet ﷺ.",
-  },
-  {
-    id: "islamic-manners",
-    title: "Islamic Manners",
-    category: "Adab",
-    level: "Kids",
-    minAge: 5,
-    lessons: 10,
-    description: "Practical adab for daily life—home, school, and friends.",
-  },
-  {
-    id: "tajweed-foundations",
-    title: "Tajwīd Foundations",
-    category: "Qur’an",
-    level: "Intermediate",
-    minAge: 10,
-    lessons: 16,
-    description: "Makharij, rules, and guided practice with clear structure.",
-  },
-  {
-    id: "fiqh-for-families",
-    title: "Fiqh for Families",
-    category: "Fiqh",
-    level: "All Levels",
-    minAge: 12,
-    lessons: 14,
-    description: "Everyday rulings explained simply with family-friendly examples.",
-  },
-];
 
 const LEVELS = ["All", "Beginner", "Intermediate", "Kids", "All Levels"];
 const CATEGORIES = ["All", "Qur’an", "Arabic", "Seerah", "Adab", "Fiqh"];
@@ -75,13 +18,32 @@ export default function Home() {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState("All");
   const [category, setCategory] = useState("All");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await api.get("/api/v1/courses?limit=100&active_only=true");
+        const apiCourses = response.data || [];
+        setCourses(apiCourses);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+        setCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return COURSES.filter((c) => {
+    return courses.filter((c) => {
       const matchesQ =
         !s ||
-        (c.title + " " + c.category + " " + c.level + " " + c.description)
+        (c.title + " " + c.description)
           .toLowerCase()
           .includes(s);
 
@@ -90,7 +52,7 @@ export default function Home() {
 
       return matchesQ && matchesLevel && matchesCategory;
     });
-  }, [q, level, category]);
+  }, [q, level, category, courses]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -316,3 +278,4 @@ export default function Home() {
     </div>
   );
 }
+

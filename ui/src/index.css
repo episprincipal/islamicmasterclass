@@ -27,6 +27,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* =========================================================
+   Light theme polish – stronger borders on white
+   ========================================================= */
+:root {
+  --surface-bg: #f8fafc;
+  --surface-border-strong: #cbd5e1; /* slate-300 */
+  --surface-ring-strong: #cbd5e1;   /* slate-300 */
+}
+
+body {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  color: #0f172a;
+}
+
+.border-slate-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(203 213 225 / var(--tw-border-opacity));
+}
+
+.ring-slate-200 {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(203 213 225 / var(--tw-ring-opacity));
+}
+
 /* Links & buttons – neutral defaults */
 a {
   text-decoration: none;

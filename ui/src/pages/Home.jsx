@@ -95,7 +95,7 @@ export default function Home() {
   }, [q, level, category]);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Header (white + emerald) */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
@@ -129,7 +129,7 @@ export default function Home() {
 
             <button
               onClick={() => navigate("/login")}
-              className="rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
               Login
             </button>

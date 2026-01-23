@@ -10,6 +10,8 @@ import api from "../lib/api";
 export default function Login() {
   const navigate = useNavigate();
 
+  const googleAuthUrl = `${import.meta.env.VITE_API_BASE_URL || ""}/auth/google`;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
@@ -36,8 +38,16 @@ export default function Login() {
     }
   }
 
+  function onGoogle() {
+    if (!googleAuthUrl || googleAuthUrl === "/auth/google") {
+      alert("Google sign-in URL is not configured. Set VITE_API_BASE_URL.");
+      return;
+    }
+    window.location.href = googleAuthUrl;
+  }
+
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-3">
@@ -123,6 +133,18 @@ export default function Login() {
                 className="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
               >
                 {loading ? "Signing in..." : "Sign in"}
+              </button>
+
+              <div className="relative py-2 text-center text-xs text-slate-500">
+                <span className="bg-white px-2">or</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={onGoogle}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                <span>Continue with Google</span>
               </button>
 
               <div className="flex items-center justify-between text-sm">

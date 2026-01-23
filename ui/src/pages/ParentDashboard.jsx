@@ -158,7 +158,7 @@ function GlassTopBar({ parentName }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200/70 bg-white/70 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-slate-300/70 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link to="/" className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-sm" />
@@ -173,7 +173,7 @@ function GlassTopBar({ parentName }) {
         <div className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
+            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
           >
             <span className="hidden sm:inline">{parentName}</span>
             <span className="sm:hidden">Menu</span>
@@ -182,7 +182,7 @@ function GlassTopBar({ parentName }) {
 
           {open && (
             <div
-              className="absolute right-0 mt-2 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg"
+              className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-300 bg-white p-2 shadow-lg"
               onMouseLeave={() => setOpen(false)}
             >
               <Link
@@ -221,7 +221,7 @@ function StudentTile({ student, onSelect, selected }) {
       className={cn(
         "group text-left rounded-2xl border bg-white p-5 shadow-sm transition",
         "hover:-translate-y-0.5 hover:shadow-md",
-        selected ? "border-emerald-300 ring-2 ring-emerald-100" : "border-gray-200"
+        selected ? "border-emerald-300 ring-2 ring-emerald-100" : "border-slate-300"
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -262,7 +262,7 @@ function StudentTile({ student, onSelect, selected }) {
 
 function CourseRow({ course }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-md">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-gray-900">{course.title}</div>
@@ -280,7 +280,7 @@ function CourseRow({ course }) {
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        <div className="rounded-xl bg-gray-50 p-3">
+        <div className="rounded-xl bg-gray-50 p-3 ring-1 ring-slate-200">
           <div className="text-xs text-gray-600">Quiz</div>
           <div className="mt-1 text-sm font-semibold text-gray-900">
             {course.quiz?.lastScore === null || typeof course.quiz?.lastScore === "undefined"
@@ -292,13 +292,13 @@ function CourseRow({ course }) {
           </div>
         </div>
 
-        <div className="rounded-xl bg-gray-50 p-3">
+        <div className="rounded-xl bg-gray-50 p-3 ring-1 ring-slate-200">
           <div className="text-xs text-gray-600">Wrong answers</div>
           <div className="mt-1 text-sm font-semibold text-gray-900">{course.wrongAnswers}</div>
           <div className="mt-1 text-xs text-gray-600">Last attempts</div>
         </div>
 
-        <div className="rounded-xl bg-gray-50 p-3">
+        <div className="rounded-xl bg-gray-50 p-3 ring-1 ring-slate-200">
           <div className="text-xs text-gray-600">Avg time</div>
           <div className="mt-1 text-sm font-semibold text-gray-900">
             {course.timeAvgMin ? `${course.timeAvgMin} min` : "—"}
@@ -311,7 +311,7 @@ function CourseRow({ course }) {
         <button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-95">
           Assign Course
         </button>
-        <button className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50">
+        <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50">
           View Report
         </button>
       </div>
@@ -336,7 +336,7 @@ export default function ParentDashboard() {
   }, [parent.students]);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <GlassTopBar parentName={parent.name} />
 
       {/* subtle Islamic minimal background */}
@@ -353,7 +353,7 @@ export default function ParentDashboard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50">
+            <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50">
               Download Report
             </button>
             <button className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-95">
@@ -364,19 +364,19 @@ export default function ParentDashboard() {
 
         {/* Summary cards */}
         <div className="mt-6 grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
             <div className="text-sm text-gray-600">Children</div>
             <div className="mt-1 text-2xl font-semibold">{stats.children}</div>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
             <div className="text-sm text-gray-600">Total Courses</div>
             <div className="mt-1 text-2xl font-semibold">{stats.totalCourses}</div>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
             <div className="text-sm text-gray-600">Quizzes Passed</div>
             <div className="mt-1 text-2xl font-semibold">{stats.passed}</div>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
             <div className="text-sm text-gray-600">In Progress</div>
             <div className="mt-1 text-2xl font-semibold">{stats.inProgress}</div>
           </div>
@@ -405,7 +405,7 @@ export default function ParentDashboard() {
 
           {/* Right: child details view */}
           <section className="lg:col-span-7">
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-sm font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
@@ -460,7 +460,7 @@ export default function ParentDashboard() {
               <div className="mt-6 flex items-center justify-between">
                 <h3 className="text-base font-semibold">Enrolled Courses</h3>
                 <div className="flex gap-2">
-                  <button className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium shadow-sm hover:bg-gray-50">
+                  <button className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium shadow-sm hover:bg-gray-50">
                     Bypass Assessment
                   </button>
                   <button className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:opacity-95">
@@ -477,7 +477,7 @@ export default function ParentDashboard() {
 
               <div className="mt-6">
                 <h3 className="text-base font-semibold">Assessment History</h3>
-                <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200">
+                <div className="mt-3 overflow-hidden rounded-2xl border border-slate-300">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-left text-xs text-gray-600">
                       <tr>
@@ -511,7 +511,7 @@ export default function ParentDashboard() {
           </section>           
         </div>
 
-        <footer className="mt-10 border-t border-gray-200 pt-6 text-sm text-gray-500">
+        <footer className="mt-10 border-t border-slate-300 pt-6 text-sm text-gray-500">
           Minimal, Islamic-themed, Apple-style dashboard UI with Airtable child tiles (seed data).
         </footer>
       </main>

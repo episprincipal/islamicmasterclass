@@ -13,10 +13,19 @@ export default defineConfig( {
     // Cloud Shell web preview domain
     allowedHosts: [ ".cloudshell.dev" ],
 
-    // HMR over the proxy
-    hmr: {
+    // HMR configuration - uses ws for local, wss for Cloud Shell
+    hmr: process.env.CLOUDSHELL_ENVIRONMENT ? {
       protocol: "wss",
       clientPort: 443,
+    } : true,
+
+    // Proxy API requests to backend
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 } );

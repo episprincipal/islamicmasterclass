@@ -26,16 +26,70 @@ export default function Signup() {
 
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  // Validation functions
+  const validatePhone = (phoneNum) => {
+    // Accept common phone formats
+    const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
+    return phoneNum === "" || phoneRegex.test(phoneNum.trim());
+  };
+
+  const getPasswordStrength = (pwd) => {
+    let strength = 0;
+    if (pwd.length >= 6) strength++;
+    if (/[A-Z]/.test(pwd)) strength++;
+    if (/[a-z]/.test(pwd)) strength++;
+    if (/[0-9]/.test(pwd)) strength++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) strength++;
+    return strength;
+  };
+
+  const validatePassword = (pwd) => {
+    return pwd.length >= 6 && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
+  };
+
+  const getStrengthLabel = (strength) => {
+    if (strength === 0) return "None";
+    if (strength <= 2) return "Weak";
+    if (strength <= 3) return "Fair";
+    if (strength <= 4) return "Good";
+    return "Strong";
+  };
+
+  const getStrengthColor = (strength) => {
+    if (strength === 0) return "bg-slate-300";
+    if (strength <= 2) return "bg-red-500";
+    if (strength <= 3) return "bg-yellow-500";
+    if (strength <= 4) return "bg-blue-500";
+    return "bg-green-500";
+  };
 
   async function onSubmit(e) {
     e.preventDefault();
     setMsg("");
+    const newErrors = {};
+
+    // Validate phone
+    if (phone && !validatePhone(phone)) {
+      newErrors.phone = "Phone format is invalid. Use at least 10 digits.";
+    }
+
+    // Validate password
+    if (!validatePassword(password)) {
+      newErrors.password = "Password must be at least 6 characters with a special character.";
+    }
 
     if (password !== confirm) {
-      setMsg("❌ Password and confirm password do not match.");
+      newErrors.confirm = "Passwords do not match.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
     setLoading(true);
     try {
       const res = await api.post("/api/v1/auth/register", {
@@ -178,8 +232,9 @@ export default function Signup() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 (555) 123-4567"
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  className={`mt-1 w-full rounded-xl border ${errors.phone ? 'border-red-400' : 'border-slate-200'} bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100`}
                 />
+                {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
               </div>
 
               <div>
@@ -235,9 +290,38 @@ export default function Signup() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a strong password"
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  className={`mt-1 w-full rounded-xl border ${errors.password ? 'border-red-400' : 'border-slate-200'} bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100`}
                   required
                 />
+                {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+                
+                {/* Password Strength Meter */}
+                {password && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-slate-600">Strength:</span>
+                      <span className={`text-xs font-semibold ${
+                        getPasswordStrength(password) <= 2 ? 'text-red-600' :
+                        getPasswordStrength(password) <= 3 ? 'text-yellow-600' :
+                        getPasswordStrength(password) <= 4 ? 'text-blue-600' :
+                        'text-green-600'
+                      }`}>
+                        {getStrengthLabel(getPasswordStrength(password))}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${getStrengthColor(getPasswordStrength(password))}`}
+                        style={{ width: `${(getPasswordStrength(password) / 5) * 100}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-slate-600">
+                      • At least 6 characters {password.length >= 6 ? '✓' : ''}
+                      <br />
+                      • Contains a special character (!@#$%^&* etc) {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '✓' : ''}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -247,9 +331,10 @@ export default function Signup() {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Confirm password"
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  className={`mt-1 w-full rounded-xl border ${errors.confirm ? 'border-red-400' : 'border-slate-200'} bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100`}
                   required
                 />
+                {errors.confirm && <p className="mt-1 text-xs text-red-600">{errors.confirm}</p>}
               </div>
 
               <button

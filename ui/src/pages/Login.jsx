@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../lib/api";
 import { getRoleFromToken } from "../lib/auth";
+import loginBanner from "../assets/Login_Page.jpg";
 
 /**
  * Scope mentions Login layout: left panel image + right panel form.:contentReference[oaicite:2]{index=2}
@@ -88,8 +89,7 @@ export default function Login() {
             <div
               className="h-full min-h-[340px] bg-cover bg-center"
               style={{
-                backgroundImage:
-                  "url(https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=1600&q=70)",
+                backgroundImage: `url(${loginBanner})`,
               }}
               aria-hidden="true"
             />

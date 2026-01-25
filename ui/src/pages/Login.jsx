@@ -168,9 +168,6 @@ export default function Login() {
               </div>
             </form>
 
-            <div className="mt-6 text-xs text-slate-500">
-              If login returns <b>404</b>, your endpoint might be different. We’ll confirm from Swagger next.
-            </div>
           </div>
         </div>
       </main>

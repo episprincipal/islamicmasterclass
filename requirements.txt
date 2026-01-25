@@ -16,3 +16,12 @@ pytest>=8.0.0
 python-jose[cryptography]
 passlib[bcrypt]
 
+uvicorn
+python-dotenv
+itsdangerous
+authlib
+httpx
+
+
+python-multipart
+google-cloud-storage

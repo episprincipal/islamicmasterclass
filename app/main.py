@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 
 # Load .env.local before importing config
-load_dotenv(".env.local")
+load_dotenv()
 
 from app.api.v1.router import api_router
 

@@ -62,7 +62,6 @@ CREATE TABLE courses (
     category       VARCHAR(100),          -- e.g. Quran, Tajweed, Arabic, Seerah, Adab, Fiqh
     min_age        INT,
     age_max        INT,
-    lessons_count  INT,                   -- denormalized lesson count (if lessons table added, compute from joins)
     is_active      BOOLEAN NOT NULL DEFAULT TRUE,
     created_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );

@@ -36,7 +36,6 @@ class Course(Base):
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
     min_age: Mapped[int | None] = mapped_column(Integer, nullable=True)
     age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    lessons_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
 

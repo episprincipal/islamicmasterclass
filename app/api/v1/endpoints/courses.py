@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from typing import List, Optional
 
 from app.db.session import get_db
@@ -27,7 +28,31 @@ def list_courses(
         q = q.filter(Course.course_name.ilike(like))
 
     courses = q.order_by(Course.course_id.desc()).offset(offset).limit(limit).all()
-    return [CourseOut.model_validate(c).model_dump(by_alias=True) for c in courses]
+    
+    # Fetch actual chapter counts for all courses
+    course_ids = [c.course_id for c in courses]
+    chapter_counts = {}
+    
+    if course_ids:
+        result = db.execute(text("""
+            SELECT course_id, COUNT(*) as chapter_count
+            FROM imc.course_chapters
+            WHERE course_id = ANY(:course_ids)
+            GROUP BY course_id
+        """), {"course_ids": course_ids})
+        
+        for row in result:
+            chapter_counts[row[0]] = row[1]
+    
+    # Convert to output format and inject actual chapter count
+    output = []
+    for c in courses:
+        course_dict = CourseOut.model_validate(c).model_dump(by_alias=True)
+        # Override lessons_count with actual chapter count
+        course_dict['lessons'] = chapter_counts.get(c.course_id, 0)
+        output.append(course_dict)
+    
+    return output
 
 
 @router.get("/{course_id}")
@@ -35,7 +60,18 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
     course = db.query(Course).filter(Course.course_id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    return CourseOut.model_validate(course).model_dump(by_alias=True)
+    
+    # Get actual chapter count
+    chapter_count = db.execute(text("""
+        SELECT COUNT(*) 
+        FROM imc.course_chapters 
+        WHERE course_id = :course_id
+    """), {"course_id": course_id}).scalar() or 0
+    
+    course_dict = CourseOut.model_validate(course).model_dump(by_alias=True)
+    course_dict['lessons'] = chapter_count
+    
+    return course_dict
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -48,7 +84,6 @@ def create_course(payload: CourseCreate, db: Session = Depends(get_db)):
         category=payload.category,
         min_age=payload.min_age,
         age_max=payload.age_max,
-        lessons_count=payload.lessons_count,
         is_active=payload.is_active,
     )
     db.add(course)

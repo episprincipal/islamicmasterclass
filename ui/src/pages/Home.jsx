@@ -234,7 +234,7 @@ export default function Home() {
 
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-700">
                 <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">{c.category}</span>
-                <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">{c.lessons} lessons</span>
+                <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">{c.lessons} chapters</span>
                 <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200">Min age {c.minAge}+</span>
               </div>
 

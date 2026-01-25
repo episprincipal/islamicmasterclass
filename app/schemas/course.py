@@ -11,7 +11,6 @@ class CourseCreate(BaseModel):
     category: Optional[str] = Field(default=None, max_length=100)
     min_age: Optional[int] = None
     age_max: Optional[int] = None
-    lessons_count: Optional[int] = None
     is_active: bool = True
 
 
@@ -23,7 +22,6 @@ class CourseUpdate(BaseModel):
     category: Optional[str] = Field(default=None, max_length=100)
     min_age: Optional[int] = None
     age_max: Optional[int] = None
-    lessons_count: Optional[int] = None
     is_active: Optional[bool] = None
 
 
@@ -34,7 +32,7 @@ class CourseOut(BaseModel):
     price: Optional[float] = None
     level: Optional[str] = None
     category: Optional[str] = None
-    lessons: Optional[int] = Field(default=None, validation_alias="lessons_count", serialization_alias="lessons")
+    lessons: Optional[int] = Field(default=0, serialization_alias="lessons")
     minAge: Optional[int] = Field(default=None, validation_alias="min_age", serialization_alias="minAge")
     maxAge: Optional[int] = Field(default=None, validation_alias="age_max", serialization_alias="maxAge")
     is_active: bool

@@ -47,7 +47,8 @@ export default function Home() {
           .toLowerCase()
           .includes(s);
 
-      const matchesLevel = level === "All" || c.level === level;
+      const normalizeLevel = (lvl) => (lvl || "").toLowerCase().replace(/-/g, " ");
+      const matchesLevel = level === "All" || normalizeLevel(c.level) === normalizeLevel(level);
       const matchesCategory = category === "All" || c.category === category;
 
       return matchesQ && matchesLevel && matchesCategory;

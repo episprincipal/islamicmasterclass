@@ -8,9 +8,23 @@ export default function AuthCallback() {
   useEffect(() => {
     const token = searchParams.get("token");
     const role = searchParams.get("role");
+    const firstName = searchParams.get("first_name");
+    const lastName = searchParams.get("last_name");
+    const email = searchParams.get("email");
 
     if (token) {
       localStorage.setItem("imc_token", token);
+      
+      // Store user data if available
+      if (email) {
+        const userData = {
+          email,
+          role,
+          first_name: firstName || '',
+          last_name: lastName || ''
+        };
+        localStorage.setItem("imc_user", JSON.stringify(userData));
+      }
       
       // Redirect based on role
       if (role === "parent") {

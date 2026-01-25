@@ -104,7 +104,11 @@ export default function Signup() {
         address: address.trim() || null,
       });
       const token = res.data?.access_token;
+      const user = res.data?.user;
+      
       if (token) localStorage.setItem("imc_token", token);
+      if (user) localStorage.setItem("imc_user", JSON.stringify(user));
+      
       setMsg("✅ Account created! Redirecting to dashboard...");
       
       // Redirect based on role

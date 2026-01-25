@@ -70,7 +70,7 @@ function GlassTopBar({ parentName, onLogout }) {
         <div className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
             <span className="hidden sm:inline">{parentName}</span>
             <span className="sm:hidden">Menu</span>
@@ -238,9 +238,30 @@ export default function ParentDashboard() {
       setParentId(decoded.sub);
       
       const userData = localStorage.getItem("imc_user");
+      
       if (userData) {
         const user = JSON.parse(userData);
-        setParentName(user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : "Parent");
+        console.log("User data:", user);
+        
+        // Try multiple ways to get the parent's name
+        let displayName = "Parent";
+        
+        if (user.first_name && user.last_name) {
+          displayName = `${user.first_name} ${user.last_name}`;
+        } else if (user.first_name) {
+          displayName = user.first_name;
+        } else if (user.firstName && user.lastName) {
+          displayName = `${user.firstName} ${user.lastName}`;
+        } else if (user.firstName) {
+          displayName = user.firstName;
+        } else if (user.name) {
+          displayName = user.name;
+        } else if (user.email) {
+          displayName = user.email.split('@')[0];
+        }
+        
+        console.log("Display name:", displayName);
+        setParentName(displayName);
       }
     } catch (err) {
       console.error("Token decode error:", err);
@@ -356,7 +377,7 @@ export default function ParentDashboard() {
             <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50">
               Download Report
             </button>
-            <button className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-95">
+            <button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-95">
               Messages
             </button>
           </div>

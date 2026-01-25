@@ -27,7 +27,11 @@ export default function Login() {
     try {
       const res = await api.post("/api/v1/auth/login", { email, password });
       const token = res.data?.access_token;
+      const user = res.data?.user;
+      
       if (token) localStorage.setItem("imc_token", token);
+      if (user) localStorage.setItem("imc_user", JSON.stringify(user));
+      
       setMsg("✅ Login successful!");
       
       // Redirect based on role

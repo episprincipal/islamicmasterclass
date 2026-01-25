@@ -30,7 +30,7 @@ oauth.register(
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.execute(
         text("""
-            SELECT user_id, email, password_hash
+            SELECT user_id, email, password_hash, first_name, last_name
             FROM imc.users
             WHERE lower(email) = lower(:email)
             LIMIT 1
@@ -63,7 +63,13 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"user_id": user["user_id"], "email": user["email"], "role": role},
+        "user": {
+            "user_id": user["user_id"], 
+            "email": user["email"], 
+            "role": role,
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name")
+        },
     }
 
 # Explicit OPTIONS handler to satisfy CORS preflight for login
@@ -167,7 +173,13 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"user_id": user_id, "email": email, "role": role_name},
+        "user": {
+            "user_id": user_id, 
+            "email": email, 
+            "role": role_name,
+            "first_name": payload.first_name.strip(),
+            "last_name": payload.last_name.strip()
+        },
     }
 
 
@@ -200,6 +212,8 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         
         if existing_user:
             user_id = existing_user['user_id']
+            first_name = existing_user.get('first_name', '')
+            last_name = existing_user.get('last_name', '')
             
             # Get user role
             role = db.execute(
@@ -254,9 +268,10 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             extra={"role": role, "email": email}
         )
         
-        # Redirect to frontend with token
+        # Redirect to frontend with token and user info
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
-        redirect_url = f"{frontend_url}/auth/callback?token={access_token}&role={role}"
+        from urllib.parse import quote
+        redirect_url = f"{frontend_url}/auth/callback?token={access_token}&role={role}&first_name={quote(first_name or '')}&last_name={quote(last_name or '')}&email={quote(email)}"
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:

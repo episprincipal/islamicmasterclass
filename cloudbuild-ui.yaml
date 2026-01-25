@@ -1,5 +1,4 @@
 steps:
-  # Build UI
   - name: "gcr.io/cloud-builders/npm"
     dir: "ui"
     entrypoint: "bash"
@@ -9,20 +8,16 @@ steps:
         npm ci
         npm run build
 
-  # Sync build output to bucket
   - name: "gcr.io/cloud-builders/gsutil"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        # Adjust if your build output folder is 'dist' (Vite) or 'build' (CRA)
         if [ -d "ui/dist" ]; then OUT="ui/dist"; else OUT="ui/build"; fi
         gsutil -m rsync -r -d "$OUT" "gs://${_UI_BUCKET}"
-        # optional: set cache headers (recommended later for CDN)
-        # gsutil -m setmeta -h "Cache-Control:public,max-age=3600" "gs://${_UI_BUCKET}/**"
 
 substitutions:
-  _UI_BUCKET: "REPLACE_ME_UI_BUCKET"
+  _UI_BUCKET: "REPLACE_WITH_YOUR_BUCKET_NAME"
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -14,7 +14,13 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # 1. Activate Python Virtual Environment
 Write-Host "[1/4] Activating Python virtual environment..." -ForegroundColor Yellow
-& "$scriptDir\..\venv\Scripts\Activate.ps1"
+$venvPath = "$scriptDir\..\venv\Scripts\Activate.ps1"
+if (Test-Path $venvPath) {
+    & $venvPath
+    Write-Host "Python virtual environment activated" -ForegroundColor Green
+} else {
+    Write-Host "Virtual environment not found at $venvPath - skipping activation" -ForegroundColor Yellow
+}
 
 # 2. Start Cloud SQL Proxy
 Write-Host "[2/4] Starting Cloud SQL Proxy..." -ForegroundColor Yellow
@@ -26,10 +32,16 @@ Start-Sleep -Seconds 2
 
 # 3. Start FastAPI Backend
 Write-Host "[3/4] Starting FastAPI Backend..." -ForegroundColor Yellow
-$apiProcess = Start-Process -FilePath "powershell.exe" `
-    -ArgumentList "-NoExit -Command `"cd '$scriptDir'; `$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`"" `
-    -PassThru
-Write-Host "FastAPI Backend started (PID: $($apiProcess.Id))" -ForegroundColor Green
+try {
+    $apiProcess = Start-Process -FilePath "powershell.exe" `
+        -ArgumentList "-NoExit -Command `"cd '$scriptDir'; `$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`"" `
+        -PassThru -ErrorAction Stop
+    Write-Host "FastAPI Backend started (PID: $($apiProcess.Id))" -ForegroundColor Green
+} catch {
+    Write-Host "Warning: Failed to start FastAPI Backend using Start-Process" -ForegroundColor Yellow
+    Write-Host "To start it manually, run:" -ForegroundColor Yellow
+    Write-Host "`$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000" -ForegroundColor Cyan
+}
 Start-Sleep -Seconds 3
 
 # 4. Start Vite UI Dev Server

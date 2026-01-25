@@ -111,7 +111,7 @@ def update_course(course_id: int, payload: CourseUpdate, db: Session = Depends(g
 def delete_course(course_id: int, db: Session = Depends(get_db)):
     course = db.query(Course).filter(Course.course_id == course_id).first()
     if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+        raise HTTPException(status_code=404, detail="Course not found Testing")
 
     db.delete(course)
     db.commit()

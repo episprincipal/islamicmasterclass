@@ -125,17 +125,17 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     role_name = role_row["role_name"]
 
     # 3) Insert user using your REAL schema
-    full_name = f"{payload.first_name.strip()} {payload.last_name.strip()}".strip()
     pw_hash = get_password_hash(payload.password)
 
     user_row = db.execute(
         text("""
-            INSERT INTO imc.users (full_name, email, phone, dob, gender, address, password_hash)
-            VALUES (:full_name, :email, :phone, :dob, :gender, :address, :password_hash)
+            INSERT INTO imc.users (first_name, last_name, email, phone, dob, gender, address, password_hash)
+            VALUES (:first_name, :last_name, :email, :phone, :dob, :gender, :address, :password_hash)
             RETURNING user_id, email
         """),
         {
-            "full_name": full_name,
+            "first_name": payload.first_name.strip(),
+            "last_name": payload.last_name.strip(),
             "email": email,
             "phone": payload.phone.strip() if payload.phone else None,
             "dob": payload.dob,  # should be "YYYY-MM-DD" from UI
@@ -194,7 +194,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         
         # Check if user exists
         existing_user = db.execute(
-            text("SELECT user_id, full_name FROM imc.users WHERE lower(email) = lower(:email) LIMIT 1"),
+            text("SELECT user_id, first_name, last_name FROM imc.users WHERE lower(email) = lower(:email) LIMIT 1"),
             {"email": email}
         ).mappings().first()
         
@@ -214,16 +214,19 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             ).scalar() or "student"
         else:
             # Create new user
-            full_name = user_info.get('name', email.split('@')[0])
+            name_parts = user_info.get('name', email.split('@')[0]).split(' ', 1)
+            first_name = name_parts[0] if name_parts else email.split('@')[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ""
             
             user_row = db.execute(
                 text("""
-                    INSERT INTO imc.users (full_name, email, password_hash)
-                    VALUES (:full_name, :email, :password_hash)
+                    INSERT INTO imc.users (first_name, last_name, email, password_hash)
+                    VALUES (:first_name, :last_name, :email, :password_hash)
                     RETURNING user_id
                 """),
                 {
-                    "full_name": full_name,
+                    "first_name": first_name,
+                    "last_name": last_name,
                     "email": email,
                     "password_hash": "",  # No password for OAuth users
                 }

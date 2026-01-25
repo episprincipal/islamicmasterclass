@@ -240,7 +240,7 @@ export default function ParentDashboard() {
       const userData = localStorage.getItem("imc_user");
       if (userData) {
         const user = JSON.parse(userData);
-        setParentName(user.full_name || "Parent");
+        setParentName(user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : "Parent");
       }
     } catch (err) {
       console.error("Token decode error:", err);

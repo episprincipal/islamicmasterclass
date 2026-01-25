@@ -164,7 +164,6 @@ export default function Home() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold">Course Catalog</h2>
-            <p className="mt-1 text-sm text-slate-600">Airtable-style tiles with quick details and actions.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

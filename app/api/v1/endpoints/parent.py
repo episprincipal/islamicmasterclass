@@ -18,13 +18,14 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
             SELECT 
                 u.user_id,
                 u.email,
-                u.full_name,
+                u.first_name,
+                u.last_name,
                 (SELECT COUNT(*) FROM imc.enrollments e WHERE e.user_id = u.user_id AND e.status = 'active') as course_count,
                 (SELECT ROUND(AVG(cp.progress_percent)::numeric, 2) FROM imc.course_progress cp WHERE cp.user_id = u.user_id) as avg_progress
             FROM imc.users u
             JOIN imc.parent_student ps ON u.user_id = ps.student_user_id
             WHERE ps.parent_user_id = :parent_id
-            ORDER BY u.full_name
+            ORDER BY u.first_name, u.last_name
         """),
         {"parent_id": parent_id},
     ).mappings().all()
@@ -32,7 +33,7 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
     return [
         {
             "id": child["user_id"],
-            "name": child["full_name"],
+            "name": f"{child['first_name']} {child['last_name']}".strip(),
             "email": child["email"],
             "course_count": child["course_count"] or 0,
             "avg_progress": child["avg_progress"] or 0,
@@ -124,7 +125,7 @@ def get_child_summary(parent_id: int, child_id: int, db: Session = Depends(get_d
     # Get child info
     child = db.execute(
         text("""
-            SELECT user_id, full_name, email, created_at
+            SELECT user_id, first_name, last_name, email, created_at
             FROM imc.users
             WHERE user_id = :child_id
         """),
@@ -153,7 +154,7 @@ def get_child_summary(parent_id: int, child_id: int, db: Session = Depends(get_d
 
     return {
         "id": child["user_id"],
-        "name": child["full_name"],
+        "name": f"{child['first_name']} {child['last_name']}".strip(),
         "email": child["email"],
         "joined": child["created_at"],
         "total_courses": stats["total_courses"] or 0,

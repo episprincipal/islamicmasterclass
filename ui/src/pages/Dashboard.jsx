@@ -8,7 +8,7 @@ export default function Dashboard() {
       <h1>Dashboard</h1>
       {user ? (
         <>
-          <p>Welcome, <b>{user.full_name || user.name || user.email}</b></p>
+          <p>Welcome, <b>{user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.name || user.email}</b></p>
           <pre style={{ background: "#f6f6f6", padding: 12, borderRadius: 8 }}>
             {JSON.stringify(user, null, 2)}
           </pre>

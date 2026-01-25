@@ -4,8 +4,11 @@ from typing import Optional, Dict, Any
 
 from jose import jwt
 from passlib.context import CryptContext
+import bcrypt
 
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+# Support both bcrypt and pbkdf2 to verify existing/demo users
+# Prefer pbkdf2 by default to avoid local bcrypt backend issues
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-secret-manager")
 JWT_ALG = os.getenv("JWT_ALG", "HS256")
@@ -19,7 +22,16 @@ def get_password_hash(password: str) -> str:
     return hash_password(password)
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
-    return pwd_context.verify(plain_password, password_hash)
+    try:
+        return pwd_context.verify(plain_password, password_hash)
+    except Exception:
+        # Fallback: if stored hash is bcrypt ($2a/$2b), verify using bcrypt directly
+        if password_hash.startswith("$2a$") or password_hash.startswith("$2b$"):
+            try:
+                return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
+            except Exception:
+                return False
+        return False
 
 def create_access_token(subject: str, extra: Optional[Dict[str, Any]] = None) -> str:
     now = datetime.now(timezone.utc)

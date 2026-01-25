@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
@@ -65,6 +65,12 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": {"user_id": user["user_id"], "email": user["email"], "role": role},
     }
+
+# Explicit OPTIONS handler to satisfy CORS preflight for login
+@router.options("/login")
+def login_options() -> Response:
+    # 204 No Content is typical for preflight responses
+    return Response(status_code=204)
 
 def _users_table_columns(db: Session) -> set[str]:
     rows = db.execute(

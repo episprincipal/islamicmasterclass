@@ -20,7 +20,7 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
                 u.email,
                 u.full_name,
                 (SELECT COUNT(*) FROM imc.enrollments e WHERE e.user_id = u.user_id AND e.status = 'active') as course_count,
-                (SELECT ROUND(AVG(cp.progress_percent)::numeric, 2) FROM imc.chapter_progress cp WHERE cp.user_id = u.user_id) as avg_progress
+                (SELECT ROUND(AVG(cp.progress_percent)::numeric, 2) FROM imc.course_progress cp WHERE cp.user_id = u.user_id) as avg_progress
             FROM imc.users u
             JOIN imc.parent_student ps ON u.user_id = ps.student_user_id
             WHERE ps.parent_user_id = :parent_id
@@ -68,9 +68,11 @@ def get_child_courses(parent_id: int, child_id: int, db: Session = Depends(get_d
                 c.level,
                 c.description,
                 e.status,
-                e.enrollment_date
+                e.enrollment_date,
+                COALESCE(cp.progress_percent, 0) as progress_percent
             FROM imc.enrollments e
             JOIN imc.courses c ON e.course_id = c.course_id
+            LEFT JOIN imc.course_progress cp ON cp.user_id = e.user_id AND cp.course_id = e.course_id
             WHERE e.user_id = :child_id AND e.status = 'active'
             ORDER BY c.course_id
         """),
@@ -87,7 +89,7 @@ def get_child_courses(parent_id: int, child_id: int, db: Session = Depends(get_d
                 "description": course["description"],
                 "status": course["status"],
                 "enrolled_at": course["enrollment_date"],
-                "progress": 0,
+                "progress": float(course["progress_percent"] or 0),
                 "quiz": {
                     "correct": 0,
                     "total": 0,
@@ -142,7 +144,7 @@ def get_child_summary(parent_id: int, child_id: int, db: Session = Depends(get_d
                 COUNT(DISTINCT qat.id) as total_quizzes
             FROM imc.users u
             LEFT JOIN imc.enrollments e ON u.user_id = e.user_id AND e.status = 'active'
-            LEFT JOIN imc.chapter_progress cp ON u.user_id = cp.user_id
+            LEFT JOIN imc.course_progress cp ON u.user_id = cp.user_id
             LEFT JOIN imc.quiz_attempts qat ON u.user_id = qat.user_id
             WHERE u.user_id = :child_id
         """),

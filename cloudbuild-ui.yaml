@@ -26,7 +26,7 @@ steps:
           gsutil -m rsync -r -d build "gs://${_UI_BUCKET}"
           BUILD_DIR="build"
         fi
-
+        echo "BUILD_DIR is: ${BUILD_DIR}"
         # 3) IMPORTANT: index.html must be no-cache (prevents stale hash references)
         gsutil -h "Cache-Control:no-cache, max-age=0" cp "${BUILD_DIR}/index.html" "gs://${_UI_BUCKET}/index.html"
 

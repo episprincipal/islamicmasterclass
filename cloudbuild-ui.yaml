@@ -13,11 +13,15 @@ steps:
     args:
       - "-c"
       - |
-        if [ -d "ui/dist" ]; then OUT="ui/dist"; else OUT="ui/build"; fi
-        gsutil -m rsync -r -d "$OUT" "gs://${_UI_BUCKET}"
+        if [ -d "ui/dist" ]; then
+          gsutil -m rsync -r -d ui/dist "gs://${_UI_BUCKET}"
+        else
+          gsutil -m rsync -r -d ui/build "gs://${_UI_BUCKET}"
+        fi
+
 
 substitutions:
-  _UI_BUCKET: "REPLACE_WITH_YOUR_BUCKET_NAME"
+  _UI_BUCKET: "imc-ui-dev-479617-bucket"
 
 options:
   logging: CLOUD_LOGGING_ONLY

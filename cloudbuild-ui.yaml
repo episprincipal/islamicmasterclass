@@ -5,18 +5,20 @@ steps:
     args:
       - "-c"
       - |
+        export VITE_API_BASE_URL="https://imc-api-tk-157114594912.us-central1.run.app/api/v1"
         npm ci
         npm run build
 
   - name: "gcr.io/cloud-builders/gsutil"
     entrypoint: "bash"
+    dir: "ui"
     args:
       - "-c"
       - |
-        if [ -d "ui/dist" ]; then
-          gsutil -m rsync -r -d ui/dist "gs://${_UI_BUCKET}"
+        if [ -d "dist" ]; then
+          gsutil -m rsync -r -d dist "gs://${_UI_BUCKET}"
         else
-          gsutil -m rsync -r -d ui/build "gs://${_UI_BUCKET}"
+          gsutil -m rsync -r -d build "gs://${_UI_BUCKET}"
         fi
 
 

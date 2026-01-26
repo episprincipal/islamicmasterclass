@@ -20,12 +20,12 @@ export default defineConfig( {
     } : true,
 
     // Proxy API requests to backend
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    //proxy: {
+    //  '/api': {
+    //    target: 'http://localhost:8000',
+    //    changeOrigin: true,
+    //    secure: false,
+    //  },
+    //},
   },
 } );

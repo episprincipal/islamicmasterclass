@@ -14,7 +14,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # 1. Activate Python Virtual Environment
 Write-Host "[1/4] Activating Python virtual environment..." -ForegroundColor Yellow
-$venvPath = "$scriptDir\..\venv\Scripts\Activate.ps1"
+$venvPath = "$scriptDir\.venv\Scripts\Activate.ps1"
 if (Test-Path $venvPath) {
     & $venvPath
     Write-Host "Python virtual environment activated" -ForegroundColor Green

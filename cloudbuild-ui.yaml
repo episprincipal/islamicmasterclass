@@ -19,16 +19,16 @@ steps:
       - "-c"
       - |
         set -e
-        if [ -d "dist" ]; then
-          gsutil -m rsync -r -d dist "gs://${_UI_BUCKET}"
-          BUILD_DIR="dist"
-        else
-          gsutil -m rsync -r -d build "gs://${_UI_BUCKET}"
-          BUILD_DIR="build"
-        fi
+        
+        gsutil -m rsync -r -d dist "gs://${_UI_BUCKET}"
+        BUILD_DIR="dist"
+
+        echo "BUILD_DIR=${BUILD_DIR}"
+        ls -la "${BUILD_DIR}/index.html"
+        
 
         # 3) IMPORTANT: index.html must be no-cache (prevents stale hash references)
-        gsutil -h "Cache-Control:no-cache, max-age=0" cp "dir/index.html" "gs://${_UI_BUCKET}/index.html"
+        gsutil -h "Cache-Control:no-cache, max-age=0" cp "${BUILD_DIR}/index.html" "gs://${_UI_BUCKET}/index.html"
 
         # 4) OPTIONAL BUT RECOMMENDED: cache assets forever (safe because filenames are hashed)
         # If assets folder doesn't exist, this won't break the build.

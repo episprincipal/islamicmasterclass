@@ -19,6 +19,7 @@ app.add_middleware(
 
 # CORS origins - support both local dev and production
 DEFAULT_LOCAL_ORIGINS = [
+    "https://imc-ui-dev-479617-bucket.storage.googleapis.com",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:8080",

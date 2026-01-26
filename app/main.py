@@ -17,19 +17,24 @@ app.add_middleware(
     secret_key=os.getenv("JWT_SECRET", "change-me-in-secret-manager")
 )
 
-ALLOWED_ORIGINS = [
-    "https://imc-ui-dev-479617-bucket.storage.googleapis.com",
-    # Optional local dev:
+# CORS origins - support both local dev and production
+DEFAULT_LOCAL_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:8080",
     "http://localhost:8081",
-    # 127.0.0.1 variants for local dev
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8080",
     "http://127.0.0.1:8081",
 ]
+
+# Production UI URL(s) from environment, comma-separated
+PRODUCTION_ORIGINS = os.getenv('ALLOWED_ORIGINS', '').split(',')
+PRODUCTION_ORIGINS = [url.strip() for url in PRODUCTION_ORIGINS if url.strip()]
+
+# Combine local dev origins with production origins
+ALLOWED_ORIGINS = DEFAULT_LOCAL_ORIGINS + PRODUCTION_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,

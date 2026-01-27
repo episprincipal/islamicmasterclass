@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../lib/api";
 import { getRoleFromToken } from "../lib/auth";
-import loginBanner from "../assets/Login_Page.jpg";
+// Removed banner image per request
 
 /**
  * Scope mentions Login layout: left panel image + right panel form.:contentReference[oaicite:2]{index=2}
@@ -86,28 +86,9 @@ export default function Login() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Left image panel */}
-          <div className="overflow-hidden rounded-2xl bg-slate-50 shadow-sm ring-1 ring-slate-200">
-            <div
-              className="h-full min-h-[340px] bg-cover bg-center"
-              style={{
-                backgroundImage: `url(${loginBanner})`,
-              }}
-              aria-hidden="true"
-            />
-            <div className="p-5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-100">
-                Spiritual tone • Minimal design
-              </div>
-              <div className="mt-3 text-sm text-slate-600">
-                Login to continue your learning journey and access your dashboard.
-              </div>
-            </div>
-          </div>
-
-          {/* Right form */}
+      <main className="mx-auto px-4 py-10 flex min-h-[70vh] items-center justify-center">
+        <div className="w-full max-w-md">
+          {/* Centered login card */}
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
             <h2 className="text-xl font-bold">Login</h2>
             <p className="mt-1 text-sm text-slate-600">Enter your email and password.</p>
@@ -171,7 +152,6 @@ export default function Login() {
                 </Link>
               </div>
             </form>
-
           </div>
         </div>
       </main>

@@ -1,68 +1,161 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+/* =========================================================
+   Tailwind v4 – Core
+   ========================================================= */
+@import "tailwindcss";
+
+/* =========================================================
+   Global Reset (SAFE – does NOT fight Tailwind)
+   ========================================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* =========================================================
+   Light theme polish – stronger borders on white
+   ========================================================= */
+:root {
+  --surface-bg: #f8fafc;
+  --surface-border-strong: #cbd5e1; /* slate-300 */
+  --surface-ring-strong: #cbd5e1;   /* slate-300 */
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  color: #0f172a;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.border-slate-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(203 213 225 / var(--tw-border-opacity));
+}
+
+.ring-slate-200 {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(203 213 225 / var(--tw-ring-opacity));
+}
+
+/* Links & buttons – neutral defaults */
+a {
+  text-decoration: none;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* =========================================================
+   DARK LANDING PAGE (scoped – does NOT affect dashboards)
+   ========================================================= */
+.landing {
+  min-height: 100vh;
+  width: 100%;
+  background: #0b1220;
+  color: #e9eefc;
 }
+
+/* Landing header */
+.landingHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(11, 18, 32, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+}
+
+/* Branding */
+.brandLeft {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logoMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    135deg,
+    rgba(77, 138, 255, 0.95),
+    rgba(129, 80, 255, 0.95)
+  );
+  font-weight: 800;
+  color: white;
+}
+
+.brandName {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.brandTag {
+  opacity: 0.75;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Landing buttons */
+.primaryBtn {
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(
+    135deg,
+    rgba(77, 138, 255, 0.95),
+    rgba(129, 80, 255, 0.95)
+  );
+  border: none;
+}
+
+.secondaryBtn {
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e9eefc;
+}
+
+.ghostBtn {
+  background: transparent;
+  color: #e9eefc;
+  border: none;
+}
+
+/* =========================================================
+   IMPORTANT NOTES
+   =========================================================
+
+   ✔ Dashboards use Tailwind classes ONLY
+   ✔ No global dark background
+   ✔ No forced text colors
+   ✔ No global button overrides
+   ✔ Landing page stays dark via `.landing`
+
+   ========================================================= */

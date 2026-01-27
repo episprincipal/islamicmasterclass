@@ -13,6 +13,8 @@ class LoginUser(BaseModel):
     user_id: int
     email: EmailStr
     role: str
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 class LoginResponse(BaseModel):
@@ -43,6 +45,8 @@ class RegisterUser(BaseModel):
     user_id: int
     email: EmailStr
     role: str
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 class RegisterResponse(BaseModel):

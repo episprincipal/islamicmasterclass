@@ -11,7 +11,8 @@ class User(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now())
 
 # --- Course model ---
@@ -31,6 +32,12 @@ class Course(Base):
 
     level: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
+    # Optional metadata exposed on the course cards
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    min_age: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
 
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    

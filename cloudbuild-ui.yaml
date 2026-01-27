@@ -1,0 +1,38 @@
+steps:
+  # 1) Install + Build
+  - name: "gcr.io/cloud-builders/npm"
+    dir: "ui"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        set -e
+        export VITE_API_BASE_URL="https://imc-api-tk-157114594912.us-central1.run.app"
+        npm ci
+        npm run build
+
+  # 2) Upload dist (delete old files)
+  - name: "gcr.io/cloud-builders/gsutil"
+    dir: "ui"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        set -e
+        
+        gsutil -m rsync -r -d dist "gs://${_UI_BUCKET}"
+        
+        
+
+        # 3) IMPORTANT: index.html must be no-cache (prevents stale hash references)
+        gsutil -h "Cache-Control:no-cache, max-age=0" cp "dist/index.html" "gs://${_UI_BUCKET}/index.html"
+
+        # 4) OPTIONAL BUT RECOMMENDED: cache assets forever (safe because filenames are hashed)
+        # If assets folder doesn't exist, this won't break the build.
+        gsutil -m setmeta -r -h "Cache-Control:public, max-age=31536000, immutable" "gs://${_UI_BUCKET}/assets/**" || true
+
+substitutions:
+  _UI_BUCKET: "imc-ui-dev-479617-bucket"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

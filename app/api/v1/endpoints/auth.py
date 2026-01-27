@@ -1,4 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi.responses import RedirectResponse
+from authlib.integrations.starlette_client import OAuth
+from starlette.requests import Request
+import os
 from app.schemas.auth import RegisterRequest, RegisterResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -12,11 +16,21 @@ from app.db.session import get_db
 
 router = APIRouter()
 
+# Initialize OAuth
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'},
+)
+
 @router.post("/login", response_model=LoginResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.execute(
         text("""
-            SELECT user_id, email, password_hash
+            SELECT user_id, email, password_hash, first_name, last_name
             FROM imc.users
             WHERE lower(email) = lower(:email)
             LIMIT 1
@@ -49,8 +63,20 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"user_id": user["user_id"], "email": user["email"], "role": role},
+        "user": {
+            "user_id": user["user_id"], 
+            "email": user["email"], 
+            "role": role,
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name")
+        },
     }
+
+# Explicit OPTIONS handler to satisfy CORS preflight for login
+@router.options("/login")
+def login_options() -> Response:
+    # 204 No Content is typical for preflight responses
+    return Response(status_code=204)
 
 def _users_table_columns(db: Session) -> set[str]:
     rows = db.execute(
@@ -105,17 +131,17 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     role_name = role_row["role_name"]
 
     # 3) Insert user using your REAL schema
-    full_name = f"{payload.first_name.strip()} {payload.last_name.strip()}".strip()
     pw_hash = get_password_hash(payload.password)
 
     user_row = db.execute(
         text("""
-            INSERT INTO imc.users (full_name, email, phone, dob, gender, address, password_hash)
-            VALUES (:full_name, :email, :phone, :dob, :gender, :address, :password_hash)
+            INSERT INTO imc.users (first_name, last_name, email, phone, dob, gender, address, password_hash)
+            VALUES (:first_name, :last_name, :email, :phone, :dob, :gender, :address, :password_hash)
             RETURNING user_id, email
         """),
         {
-            "full_name": full_name,
+            "first_name": payload.first_name.strip(),
+            "last_name": payload.last_name.strip(),
             "email": email,
             "phone": payload.phone.strip() if payload.phone else None,
             "dob": payload.dob,  # should be "YYYY-MM-DD" from UI
@@ -147,5 +173,106 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"user_id": user_id, "email": email, "role": role_name},
+        "user": {
+            "user_id": user_id, 
+            "email": email, 
+            "role": role_name,
+            "first_name": payload.first_name.strip(),
+            "last_name": payload.last_name.strip()
+        },
     }
+
+
+@router.get("/google")
+async def google_login(request: Request):
+    """Initiate Google OAuth flow"""
+    redirect_uri = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/v1/auth/google/callback')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    """Handle Google OAuth callback"""
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
+        
+        if not user_info:
+            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+        
+        email = user_info.get('email')
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+        
+        # Check if user exists
+        existing_user = db.execute(
+            text("SELECT user_id, first_name, last_name FROM imc.users WHERE lower(email) = lower(:email) LIMIT 1"),
+            {"email": email}
+        ).mappings().first()
+        
+        if existing_user:
+            user_id = existing_user['user_id']
+            first_name = existing_user.get('first_name', '')
+            last_name = existing_user.get('last_name', '')
+            
+            # Get user role
+            role = db.execute(
+                text("""
+                    SELECT r.role_name
+                    FROM imc.user_roles ur
+                    JOIN imc.roles r ON r.role_id = ur.role_id
+                    WHERE ur.user_id = :uid
+                    LIMIT 1
+                """),
+                {"uid": user_id}
+            ).scalar() or "student"
+        else:
+            # Create new user
+            name_parts = user_info.get('name', email.split('@')[0]).split(' ', 1)
+            first_name = name_parts[0] if name_parts else email.split('@')[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ""
+            
+            user_row = db.execute(
+                text("""
+                    INSERT INTO imc.users (first_name, last_name, email, password_hash)
+                    VALUES (:first_name, :last_name, :email, :password_hash)
+                    RETURNING user_id
+                """),
+                {
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "email": email,
+                    "password_hash": "",  # No password for OAuth users
+                }
+            ).mappings().first()
+            
+            user_id = user_row['user_id']
+            
+            # Assign default role (student)
+            role_row = db.execute(
+                text("SELECT role_id FROM imc.roles WHERE role_name = 'student' LIMIT 1")
+            ).scalar()
+            
+            if role_row:
+                db.execute(
+                    text("INSERT INTO imc.user_roles (user_id, role_id) VALUES (:uid, :rid)"),
+                    {"uid": user_id, "rid": role_row}
+                )
+            
+            role = "student"
+            db.commit()
+        
+        # Create JWT token
+        access_token = create_access_token(
+            subject=str(user_id),
+            extra={"role": role, "email": email}
+        )
+        
+        # Redirect to frontend with token and user info
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        from urllib.parse import quote
+        redirect_url = f"{frontend_url}/auth/callback?token={access_token}&role={role}&first_name={quote(first_name or '')}&last_name={quote(last_name or '')}&email={quote(email)}"
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"OAuth error: {str(e)}")

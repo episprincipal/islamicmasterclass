@@ -11,7 +11,8 @@ CREATE TABLE users (
     id              BIGSERIAL PRIMARY KEY,
     email           VARCHAR(255) UNIQUE NOT NULL,
     password_hash   TEXT NOT NULL,
-    full_name       VARCHAR(255) NOT NULL,
+    first_name      VARCHAR(100),
+    last_name       VARCHAR(100),
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -49,26 +50,20 @@ CREATE TABLE parent_child (
 -- 2. Subjects, courses, units, lessons, content
 -------------------------------------------------------
 
-CREATE TABLE subjects (
-    id          BIGSERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    slug        VARCHAR(150) NOT NULL UNIQUE,
-    description TEXT
-);
+-- Note: imc.courses currently exists with the schema below
+-- subjects, course_units, and lessons tables are not yet created in the live DB
 
 CREATE TABLE courses (
-    id           BIGSERIAL PRIMARY KEY,
-    subject_id   BIGINT REFERENCES subjects(id),
-    title        VARCHAR(255) NOT NULL,
-    slug         VARCHAR(255) NOT NULL UNIQUE,
-    description  TEXT,
-    level        VARCHAR(50),           -- e.g. Beginner, Grade 5, etc.
-    age_min      INT,
-    age_max      INT,
-    is_published BOOLEAN NOT NULL DEFAULT FALSE,
-    created_by   BIGINT REFERENCES users(id),
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    course_id      BIGSERIAL PRIMARY KEY,
+    course_name    VARCHAR(255) NOT NULL,
+    description    TEXT,
+    price          NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    level          VARCHAR(50),           -- e.g. beginner, intermediate, kids, all-levels
+    category       VARCHAR(100),          -- e.g. Quran, Tajweed, Arabic, Seerah, Adab, Fiqh
+    min_age        INT,
+    age_max        INT,
+    is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at     TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE course_units (
@@ -124,6 +119,18 @@ CREATE TABLE lesson_progress (
     last_viewed_at   TIMESTAMPTZ,
     progress_percent NUMERIC(5,2) NOT NULL DEFAULT 0,  -- 0.00–100.00
     UNIQUE (user_id, lesson_id)
+);
+
+-- Course-level progress tracking (aggregated from lessons)
+CREATE TABLE course_progress (
+    id                  BIGSERIAL PRIMARY KEY,
+    user_id             BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id           BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    progress_percent    NUMERIC(5,2) NOT NULL DEFAULT 0,  -- 0.00–100.00
+    last_activity_date  TIMESTAMPTZ,
+    started_at          TIMESTAMPTZ,
+    completed_at        TIMESTAMPTZ,
+    UNIQUE (user_id, course_id)
 );
 
 -------------------------------------------------------

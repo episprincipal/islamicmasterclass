@@ -68,6 +68,25 @@ export default function StudentDashboard() {
     navigate("/login");
   };
 
+  const handleBackToParent = () => {
+    // Restore parent's session
+    const parentToken = localStorage.getItem("parent_token_backup");
+    const parentUser = localStorage.getItem("parent_user_backup");
+
+    if (parentToken && parentUser) {
+      localStorage.setItem("imc_token", parentToken);
+      localStorage.setItem("imc_user", parentUser);
+      localStorage.removeItem("parent_token_backup");
+      localStorage.removeItem("parent_user_backup");
+      navigate("/parent-dashboard");
+    } else {
+      // Fallback if backup not found
+      navigate("/login");
+    }
+  };
+
+  const hasParentSession = localStorage.getItem("parent_token_backup") !== null;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Header */}
@@ -93,6 +112,14 @@ export default function StudentDashboard() {
             >
               Browse Courses
             </button>
+            {hasParentSession && (
+              <button
+                onClick={handleBackToParent}
+                className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+              >
+                ← Back to Parent
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"

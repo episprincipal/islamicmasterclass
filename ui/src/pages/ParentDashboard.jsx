@@ -51,7 +51,7 @@ function quizTone(status) {
   return "neutral";
 }
 
-function GlassTopBar({ parentName, onLogout }) {
+function GlassTopBar({ parentName, onLogout, onAddChildClick }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -70,11 +70,17 @@ function GlassTopBar({ parentName, onLogout }) {
         <div className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100 px-4 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-200 transition-all duration-200 hover:shadow-md hover:ring-emerald-300 active:scale-95"
           >
             <span className="hidden sm:inline">{parentName}</span>
             <span className="sm:hidden">Menu</span>
-            <span className="text-slate-400"></span>
+            <svg
+              className="h-4 w-4 text-emerald-600"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
           </button>
 
           {open && (
@@ -88,12 +94,15 @@ function GlassTopBar({ parentName, onLogout }) {
               >
                 Payment
               </Link>
-              <Link
-                to="/add-child"
-                className="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+              <button
+                onClick={() => {
+                  onAddChildClick();
+                  setOpen(false);
+                }}
+                className="w-full text-left rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
               >
                 Add Child
-              </Link>
+              </button>
               <div className="my-1 h-px bg-slate-100" />
               <button
                 onClick={onLogout}
@@ -109,15 +118,15 @@ function GlassTopBar({ parentName, onLogout }) {
   );
 }
 
-function StudentTile({ student, onSelect, selected }) {
+function StudentTile({ student, onSelect, selected, onLoginAs }) {
   const courseCount = student.course_count || 0;
   const avgPercent = student.avg_progress || 0;
 
   return (
-    <button
+    <div
       onClick={() => onSelect(student)}
       className={cn(
-        "group text-left rounded-2xl border bg-white p-5 shadow-sm transition",
+        "group text-left rounded-2xl border bg-white p-5 shadow-sm transition cursor-pointer",
         "hover:-translate-y-0.5 hover:shadow-md",
         selected ? "border-emerald-300 ring-2 ring-emerald-100" : "border-slate-300"
       )}
@@ -146,13 +155,21 @@ function StudentTile({ student, onSelect, selected }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between gap-2">
         <span className="text-sm font-medium text-gray-900 underline decoration-gray-200 underline-offset-4 group-hover:decoration-gray-900">
           View Details
         </span>
-        <span className="text-xs text-gray-500"></span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onLoginAs(student);
+          }}
+          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors"
+        >
+          Login as {student.name.split(' ')[0]}
+        </button>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -225,6 +242,15 @@ export default function ParentDashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddChildModal, setShowAddChildModal] = useState(false);
+  const [addChildForm, setAddChildForm] = useState({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    gender: "",
+  });
+  const [addChildLoading, setAddChildLoading] = useState(false);
+  const [addChildError, setAddChildError] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("imc_token");
@@ -330,6 +356,69 @@ export default function ParentDashboard() {
     navigate("/logout");
   };
 
+  const handleLoginAs = async (child) => {
+    try {
+      // Save parent's current session before switching to child
+      const currentToken = localStorage.getItem("imc_token");
+      const currentUser = localStorage.getItem("imc_user");
+      if (currentToken && currentUser) {
+        localStorage.setItem("parent_token_backup", currentToken);
+        localStorage.setItem("parent_user_backup", currentUser);
+      }
+
+      const response = await api.post(`/api/v1/parent/children/${child.id}/login?parent_id=${parentId}`);
+      const { access_token, user } = response.data;
+
+      // Store the child's token and user info
+      localStorage.setItem("imc_token", access_token);
+      localStorage.setItem("imc_user", JSON.stringify(user));
+
+      // Redirect to student dashboard
+      navigate("/student-dashboard");
+    } catch (err) {
+      console.error("Error logging in as child:", err);
+      alert("Failed to login as child. Please try again.");
+    }
+  };
+
+  const handleAddChild = async (e) => {
+    e.preventDefault();
+    setAddChildError("");
+
+    if (!addChildForm.firstName.trim() || !addChildForm.lastName.trim() || !addChildForm.dob || !addChildForm.gender) {
+      setAddChildError("Please fill in all fields");
+      return;
+    }
+
+    setAddChildLoading(true);
+    try {
+      const response = await api.post(`/api/v1/parent/children?parent_id=${parentId}`, {
+        first_name: addChildForm.firstName.trim(),
+        last_name: addChildForm.lastName.trim(),
+        dob: addChildForm.dob,
+        gender: addChildForm.gender,
+      });
+
+      // Add the new child to the list
+      const newChild = response.data;
+      setChildren([...children, newChild]);
+      
+      // Reset form and close modal
+      setAddChildForm({
+        firstName: "",
+        lastName: "",
+        dob: "",
+        gender: "",
+      });
+      setShowAddChildModal(false);
+    } catch (err) {
+      const errorMsg = err?.response?.data?.detail || err?.message || "Failed to add child";
+      setAddChildError(errorMsg);
+    } finally {
+      setAddChildLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -359,7 +448,7 @@ export default function ParentDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <GlassTopBar parentName={parentName} onLogout={handleLogout} />
+      <GlassTopBar parentName={parentName} onLogout={handleLogout} onAddChildClick={() => setShowAddChildModal(true)} />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-50 via-white to-white" />
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 mx-auto h-64 max-w-6xl bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.18),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(245,158,11,0.10),transparent_35%)]" />
@@ -412,12 +501,12 @@ export default function ParentDashboard() {
             {children.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-300 p-6 text-center">
                 <p className="text-gray-600">No children registered yet.</p>
-                <Link
-                  to="/add-child"
-                  className="mt-3 inline-block rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white"
+                <button
+                  onClick={() => setShowAddChildModal(true)}
+                  className="mt-3 inline-block rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
                 >
                   Add a Child
-                </Link>
+                </button>
               </div>
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -427,6 +516,7 @@ export default function ParentDashboard() {
                     student={s}
                     selected={selectedStudent?.id === s.id}
                     onSelect={setSelectedStudent}
+                    onLoginAs={handleLoginAs}
                   />
                 ))}
               </div>
@@ -509,6 +599,90 @@ export default function ParentDashboard() {
           Real-time parent dashboard powered by Islamic Masterclass database.
         </footer>
       </main>
+
+      {/* Add Child Modal */}
+      {showAddChildModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
+            <h2 className="text-xl font-bold text-slate-900">Add Child</h2>
+            <p className="mt-1 text-sm text-slate-600">Enter your child's information</p>
+
+            {addChildError && (
+              <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-600 ring-1 ring-red-200">
+                {addChildError}
+              </div>
+            )}
+
+            <form onSubmit={handleAddChild} className="mt-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700">First Name</label>
+                <input
+                  type="text"
+                  value={addChildForm.firstName}
+                  onChange={(e) => setAddChildForm({ ...addChildForm, firstName: e.target.value })}
+                  placeholder="First name"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700">Last Name</label>
+                <input
+                  type="text"
+                  value={addChildForm.lastName}
+                  onChange={(e) => setAddChildForm({ ...addChildForm, lastName: e.target.value })}
+                  placeholder="Last name"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700">Date of Birth</label>
+                <input
+                  type="date"
+                  value={addChildForm.dob}
+                  onChange={(e) => setAddChildForm({ ...addChildForm, dob: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700">Gender</label>
+                <select
+                  value={addChildForm.gender}
+                  onChange={(e) => setAddChildForm({ ...addChildForm, gender: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  required
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={addChildLoading}
+                  className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+                >
+                  {addChildLoading ? "Adding..." : "Add Child"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddChildModal(false)}
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -35,6 +35,35 @@ export default function Signup() {
     return phoneNum === "" || phoneRegex.test(phoneNum.trim());
   };
 
+  const calculateAge = (dobString) => {
+    if (!dobString) return null;
+    const today = new Date();
+    const birthDate = new Date(dobString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const validateStudentAge = (dobString) => {
+    const age = calculateAge(dobString);
+    return age === null || age >= 13;
+  };
+
+  const formatPhoneNumber = (value) => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, "");
+    // Limit to 10 digits
+    const truncated = cleaned.slice(0, 10);
+    // Format as (XXX) XXX XXXX
+    if (truncated.length === 0) return "";
+    if (truncated.length <= 3) return `(${truncated}`;
+    if (truncated.length <= 6) return `(${truncated.slice(0, 3)}) ${truncated.slice(3)}`;
+    return `(${truncated.slice(0, 3)}) ${truncated.slice(3, 6)} ${truncated.slice(6)}`;
+  };
+
   const getPasswordStrength = (pwd) => {
     let strength = 0;
     if (pwd.length >= 6) strength++;
@@ -73,6 +102,16 @@ export default function Signup() {
     // Validate phone
     if (phone && !validatePhone(phone)) {
       newErrors.phone = "Phone format is invalid. Use at least 10 digits.";
+    }
+
+    // Validate student age requirement
+    if (role === "student") {
+      if (!dob) {
+        newErrors.dob = "Date of birth is required for student registration.";
+      } else if (!validateStudentAge(dob)) {
+        const age = calculateAge(dob);
+        newErrors.dob = `Students must be at least 13 years old. You are currently ${age} years old.`;
+      }
     }
 
     // Validate password
@@ -181,6 +220,21 @@ export default function Signup() {
               <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">✅ Clear learning paths</div>
               <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">✅ Family progress overview</div>
             </div>
+
+            <div className="mt-6 rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200">
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-base">⚠️</span>
+                <div>
+                  <p className="font-semibold text-blue-900">Age Requirement for Students</p>
+                  <p className="mt-1 text-sm text-blue-800">
+                    Student accounts require you to be at least <span className="font-bold">13 years old</span>. A parent account is needed for students under 13 years of age.
+                  </p>
+                  <p className="mt-2 text-sm text-blue-800">
+                    Parents can add children under 13 using the parent dashboard.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right form */}
@@ -234,8 +288,8 @@ export default function Signup() {
                 <input
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
+                  onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                  placeholder="(555) 123 4567"
                   className={`mt-1 w-full rounded-xl border ${errors.phone ? 'border-red-400' : 'border-slate-200'} bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100`}
                 />
                 {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
@@ -247,8 +301,20 @@ export default function Signup() {
                   type="date"
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  className={`mt-1 w-full rounded-xl border ${errors.dob ? 'border-red-400' : 'border-slate-200'} bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100`}
                 />
+                {role === "student" && (
+                  <p className="mt-1.5 text-xs text-slate-600">
+                    📋 <span className="font-semibold">Students must be at least 13 years old to register.</span>
+                  </p>
+                )}
+                {errors.dob && <p className="mt-1 text-xs text-red-600">{errors.dob}</p>}
+                {role === "student" && dob && calculateAge(dob) >= 13 && !errors.dob && (
+                  <p className="mt-1 text-xs text-emerald-600">✓ Age requirement met ({calculateAge(dob)} years old)</p>
+                )}
+                {role === "student" && dob && calculateAge(dob) < 13 && (
+                  <p className="mt-1 text-xs text-red-600">✗ Must be 13 or older ({calculateAge(dob)} years old - too young)</p>
+                )}
               </div>
 
               <div>

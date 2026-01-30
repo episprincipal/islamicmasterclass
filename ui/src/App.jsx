@@ -6,6 +6,8 @@ import Signup from "./pages/Signup";
 import AuthCallback from "./pages/AuthCallback";
 import ParentDashboard from "./pages/ParentDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import ManageUsers from "./pages/ManageUsers";
 import Unauthorized from "./pages/Unauthorized";
 import Logout from "./pages/Logout";
 
@@ -27,6 +29,11 @@ export default function App ()
 
       {/* Protected */ }
       <Route element={ <RequireAuth /> }>
+        <Route element={ <RequireRole allowed={ [ "admin" ] } /> }>
+          <Route path="/admin-dashboard" element={ <AdminDashboard /> } />
+          <Route path="/admin/users" element={ <ManageUsers /> } />
+        </Route>
+
         <Route element={ <RequireRole allowed={ [ "parent" ] } /> }>
           <Route path="/parent-dashboard" element={ <ParentDashboard /> } />
         </Route>

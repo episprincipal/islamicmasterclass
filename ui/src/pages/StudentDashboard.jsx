@@ -9,11 +9,17 @@ import api from "../lib/api";
  * - Progress tracking, enrolled courses, upcoming lessons
  */
 
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [studentName, setStudentName] = useState("");
   
   // Real data from API
   const [studentStats, setStudentStats] = useState({
@@ -23,10 +29,17 @@ export default function StudentDashboard() {
     inProgressCourses: 0,
   });
   const [enrolledCourses, setEnrolledCourses] = useState([]);
-  const [upcomingLessons, setUpcomingLessons] = useState([]);
+  const [upcomingChapters, setUpcomingChapters] = useState([]);
 
   useEffect(() => {
     fetchStudentData();
+    
+    // Get student name from localStorage
+    const user = localStorage.getItem("imc_user");
+    if (user) {
+      const userData = JSON.parse(user);
+      setStudentName(userData.first_name || "Student");
+    }
   }, []);
 
   const fetchStudentData = async () => {
@@ -45,15 +58,15 @@ export default function StudentDashboard() {
       const studentId = decoded.sub; // user_id from JWT
 
       // Fetch all student data in parallel
-      const [statsRes, coursesRes, lessonsRes] = await Promise.all([
+      const [statsRes, coursesRes, chaptersRes] = await Promise.all([
         api.get(`/api/v1/student/dashboard?student_id=${studentId}`),
         api.get(`/api/v1/student/courses?student_id=${studentId}`),
-        api.get(`/api/v1/student/lessons/upcoming?student_id=${studentId}`),
+        api.get(`/api/v1/student/chapters/upcoming?student_id=${studentId}`),
       ]);
 
       setStudentStats(statsRes.data);
       setEnrolledCourses(coursesRes.data);
-      setUpcomingLessons(lessonsRes.data);
+      setUpcomingChapters(chaptersRes.data);
     } catch (err) {
       console.error("Error fetching student data:", err);
       setError("Failed to load dashboard data. Please try again.");
@@ -105,27 +118,75 @@ export default function StudentDashboard() {
             </div>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="relative">
             <button
-              onClick={() => navigate("/courses")}
-              className="hidden rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 md:block"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-100 px-4 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-200 transition-all duration-200 hover:shadow-md hover:ring-emerald-300 active:scale-95"
             >
-              Browse Courses
-            </button>
-            {hasParentSession && (
-              <button
-                onClick={handleBackToParent}
-                className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+              <span className="hidden sm:inline">{studentName}</span>
+              <span className="sm:hidden">Menu</span>
+              <svg
+                className="h-4 w-4 text-emerald-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
               >
-                ← Back to Parent
-              </button>
-            )}
-            <button
-              onClick={handleLogout}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              Logout
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg"
+                onMouseLeave={() => setMenuOpen(false)}
+              >
+                {!hasParentSession && (
+                  <>
+                    <button
+                      onClick={() => {
+                        navigate("/courses");
+                        setMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      Browse Courses
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Edit Profile will be connected later
+                        setMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      Edit Profile
+                    </button>
+                    <div className="my-1 h-px bg-slate-100" />
+                  </>
+                )}
+                {hasParentSession && (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleBackToParent();
+                        setMenuOpen(false);
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 font-medium"
+                    >
+                      ← Back to Parent
+                    </button>
+                    <div className="my-1 h-px bg-slate-100" />
+                  </>
+                )}
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-left rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -164,7 +225,9 @@ export default function StudentDashboard() {
                 As-salamu alaykum! 👋
               </h1>
               <p className="mt-2 text-emerald-50">
-                Welcome back to your learning journey. Keep up the great work!
+                {studentStats.enrolledCourses > 0 
+                  ? "Welcome back to your learning journey. Keep up the great work!"
+                  : "Welcome to your learning journey! Start by enrolling in your first course."}
               </p>
             </div>
 
@@ -228,14 +291,14 @@ export default function StudentDashboard() {
             <div className="mt-6">
               {activeTab === "overview" && (
                 <div className="space-y-6">
-                  {/* Upcoming Lessons */}
+                  {/* Upcoming Chapters */}
                   <div>
-                    <h2 className="text-xl font-bold">Upcoming Lessons</h2>
-                    {upcomingLessons.length > 0 ? (
+                    <h2 className="text-xl font-bold">Upcoming Chapters</h2>
+                    {upcomingChapters.length > 0 ? (
                       <div className="mt-4 space-y-3">
-                        {upcomingLessons.map((lesson) => (
+                        {upcomingChapters.map((chapter) => (
                           <div
-                            key={lesson.id}
+                            key={chapter.id}
                             className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
                           >
                             <div className="flex items-center gap-4">
@@ -244,10 +307,10 @@ export default function StudentDashboard() {
                               </div>
                               <div>
                                 <div className="text-sm font-semibold">
-                                  {lesson.title}
+                                  {chapter.title}
                                 </div>
                                 <div className="text-xs text-slate-600">
-                                  {lesson.course}
+                                  {chapter.course}
                                 </div>
                               </div>
                             </div>
@@ -259,7 +322,7 @@ export default function StudentDashboard() {
                       </div>
                     ) : (
                       <div className="mt-4 rounded-2xl bg-slate-50 p-6 text-center text-slate-600 ring-1 ring-slate-200">
-                        <p>No upcoming lessons at the moment.</p>
+                        <p>No upcoming chapters at the moment.</p>
                         <p className="mt-2 text-sm">
                           Browse courses to get started!
                         </p>

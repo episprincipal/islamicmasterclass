@@ -108,24 +108,30 @@ def get_student_dashboard(student_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/lessons/upcoming")
-def get_upcoming_lessons(student_id: int, db: Session = Depends(get_db)):
+@router.get("/chapters/upcoming")
+def get_upcoming_chapters(student_id: int, db: Session = Depends(get_db)):
     """
-    Get upcoming lessons for the student
-    Returns lessons from enrolled courses with due dates
+    Get upcoming chapters for the student
+    Returns chapters from enrolled courses that are not yet completed
     """
-    # For now, return enrolled courses as placeholder
-    # This needs the lessons table to be fully functional
-    courses = db.execute(
+    chapters = db.execute(
         text("""
             SELECT 
-                c.course_id,
+                ch.chapter_id,
+                ch.title,
+                ch.chapter_order,
                 c.course_name,
-                e.enrollment_date
+                c.course_id,
+                COALESCE(cp.status, 'not_started') as progress_status,
+                COALESCE(cp.progress_percent, 0) as progress_percent
             FROM imc.enrollments e
             JOIN imc.courses c ON e.course_id = c.course_id
-            WHERE e.user_id = :student_id AND e.status = 'active'
-            ORDER BY e.enrollment_date DESC
+            JOIN imc.course_chapters ch ON c.course_id = ch.course_id
+            LEFT JOIN imc.chapter_progress cp ON ch.chapter_id = cp.chapter_id AND cp.user_id = :student_id
+            WHERE e.user_id = :student_id 
+                AND e.status = 'active'
+                AND COALESCE(cp.status, 'not_started') != 'completed'
+            ORDER BY c.course_id, ch.chapter_order
             LIMIT 5
         """),
         {"student_id": student_id},
@@ -133,11 +139,12 @@ def get_upcoming_lessons(student_id: int, db: Session = Depends(get_db)):
 
     return [
         {
-            "id": idx + 1,
-            "course": course["course_name"],
-            "title": f"Continue {course['course_name']}",
-            "dueDate": "Upcoming",
-            "duration": "20 min",
+            "id": chapter["chapter_id"],
+            "course": chapter["course_name"],
+            "title": chapter["title"],
+            "chapter_order": chapter["chapter_order"],
+            "progress": float(chapter["progress_percent"]),
+            "status": chapter["progress_status"],
         }
-        for idx, course in enumerate(courses)
+        for chapter in chapters
     ]

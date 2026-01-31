@@ -128,7 +128,7 @@ export default function ManageCourses() {
 
   const handleToggleActive = async (courseId, currentStatus) => {
     try {
-      await api.patch(`/api/v1/courses/${courseId}`, {
+      await api.put(`/api/v1/courses/${courseId}`, {
         is_active: !currentStatus,
       });
       fetchCourses();

@@ -34,13 +34,13 @@ Start-Sleep -Seconds 2
 Write-Host "[3/4] Starting FastAPI Backend..." -ForegroundColor Yellow
 try {
     $apiProcess = Start-Process -FilePath "powershell.exe" `
-        -ArgumentList "-NoExit -Command `"cd '$scriptDir'; `$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`"" `
+        -ArgumentList "-NoExit -Command `"cd '$scriptDir'; `$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`"" `
         -PassThru -ErrorAction Stop
     Write-Host "FastAPI Backend started (PID: $($apiProcess.Id))" -ForegroundColor Green
 } catch {
     Write-Host "Warning: Failed to start FastAPI Backend using Start-Process" -ForegroundColor Yellow
     Write-Host "To start it manually, run:" -ForegroundColor Yellow
-    Write-Host "`$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000" -ForegroundColor Cyan
+    Write-Host "`$env:DATABASE_URL='postgresql+pg8000://imc_user:Ibrahim_26!db@127.0.0.1:5432/imc_db'; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000" -ForegroundColor Cyan
 }
 Start-Sleep -Seconds 3
 
@@ -58,8 +58,8 @@ Write-Host "===========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Access your services at:" -ForegroundColor Cyan
 Write-Host "  UI:              http://localhost:8081" -ForegroundColor White
-Write-Host "  API:             http://127.0.0.1:8000" -ForegroundColor White
-Write-Host "  Swagger Docs:    http://127.0.0.1:8000/docs" -ForegroundColor White
+Write-Host "  API:             http://localhost:8000" -ForegroundColor White
+Write-Host "  Swagger Docs:    http://localhost:8000/docs" -ForegroundColor White
 Write-Host "  Database:        127.0.0.1:5432" -ForegroundColor White
 Write-Host ""
 Write-Host "Process IDs:" -ForegroundColor Cyan

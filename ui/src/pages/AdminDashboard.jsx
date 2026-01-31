@@ -225,7 +225,10 @@ export default function AdminDashboard() {
               </p>
             </button>
 
-            <button className="rounded-2xl bg-white p-6 text-left shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md hover:ring-emerald-200">
+            <button 
+              onClick={() => navigate("/admin/manage-courses")}
+              className="rounded-2xl bg-white p-6 text-left shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md hover:ring-emerald-200"
+            >
               <div className="text-base font-semibold text-slate-900">
                 Manage Courses
               </div>

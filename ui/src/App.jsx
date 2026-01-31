@@ -8,6 +8,8 @@ import ParentDashboard from "./pages/ParentDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
+import ManageCourses from "./pages/ManageCourses";
+import CreateCourse from "./pages/CreateCourse";
 import Unauthorized from "./pages/Unauthorized";
 import Logout from "./pages/Logout";
 
@@ -32,6 +34,8 @@ export default function App ()
         <Route element={ <RequireRole allowed={ [ "admin" ] } /> }>
           <Route path="/admin-dashboard" element={ <AdminDashboard /> } />
           <Route path="/admin/users" element={ <ManageUsers /> } />
+          <Route path="/admin/manage-courses" element={ <ManageCourses /> } />
+          <Route path="/admin/create-course" element={ <CreateCourse /> } />
         </Route>
 
         <Route element={ <RequireRole allowed={ [ "parent" ] } /> }>

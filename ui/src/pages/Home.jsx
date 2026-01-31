@@ -21,6 +21,7 @@ export default function Home ()
   const [ category, setCategory ] = useState( "All" );
   const [ courses, setCourses ] = useState( [] );
   const [ loading, setLoading ] = useState( true );
+  const [ error, setError ] = useState( null );
 
   useEffect( () =>
   {
@@ -30,9 +31,11 @@ export default function Home ()
         const response = await api.get( "/api/v1/courses?limit=100&active_only=true" );
         const apiCourses = response.data || [];
         setCourses( apiCourses );
+        setError( null );
       } catch ( error ) {
         console.error( "Error fetching courses:", error );
         setCourses( [] );
+        setError( "Failed to load courses. Please try again later." );
       } finally {
         setLoading( false );
       }
@@ -262,7 +265,42 @@ export default function Home ()
           ) ) }
         </div>
 
-        { filtered.length === 0 && (
+        { error && (
+          <div className="mt-8 rounded-2xl bg-red-50 p-6 text-sm text-red-600 shadow-sm ring-1 ring-red-200">
+            { error }
+          </div>
+        ) }
+
+        { loading && !error && (
+          <div className="mt-8 flex items-center justify-center rounded-2xl bg-white p-12 shadow-sm ring-1 ring-slate-200">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative h-16 w-16">
+                {/* Outer spinning circle */}
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" style={{ animationDuration: '1s' }}></div>
+                
+                {/* Middle spinning circle - opposite direction */}
+                <div className="absolute inset-2 animate-spin rounded-full border-4 border-transparent border-b-amber-500" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}></div>
+                
+                {/* Inner pulsing dot */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-3 w-3 animate-pulse rounded-full bg-emerald-600" style={{ animationDuration: '1s' }}></div>
+                </div>
+              </div>
+              
+              {/* Animated dots */}
+              <div className="flex items-center gap-1">
+                <p className="text-sm font-medium text-slate-600">Loading courses</p>
+                <div className="flex gap-1">
+                  <span className="inline-block h-1 w-1 animate-bounce rounded-full bg-emerald-600" style={{ animationDelay: '0ms' }}></span>
+                  <span className="inline-block h-1 w-1 animate-bounce rounded-full bg-emerald-600" style={{ animationDelay: '150ms' }}></span>
+                  <span className="inline-block h-1 w-1 animate-bounce rounded-full bg-emerald-600" style={{ animationDelay: '300ms' }}></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) }
+
+        { !loading && !error && filtered.length === 0 && (
           <div className="mt-8 rounded-2xl bg-white p-6 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
             No courses matched your search/filters.
           </div>

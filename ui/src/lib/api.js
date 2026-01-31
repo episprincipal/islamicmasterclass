@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create( {
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://imc-api-tk-157114594912.us-central1.run.app",
+  baseURL: "http://localhost:8000",
 } );
 
 api.interceptors.request.use( ( config ) =>
